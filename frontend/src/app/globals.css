@@ -1,26 +1,34 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Pareto Presents Color Palette */
+  --pareto-dark: #15131c;
+  --pareto-pink: #ff7eba;
+  --pareto-yellow: #f9df57;
+  --pareto-orange: #fe7e20;
+  --pareto-green: #39b16c;
+  --pareto-blue: #6caade;
+  --pareto-light: #f6f1ee;
+  --text-dark: #000000;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  /* Custom color palette */
+  --color-pareto-dark: var(--pareto-dark);
+  --color-pareto-pink: var(--pareto-pink);
+  --color-pareto-yellow: var(--pareto-yellow);
+  --color-pareto-orange: var(--pareto-orange);
+  --color-pareto-green: var(--pareto-green);
+  --color-pareto-blue: var(--pareto-blue);
+  --color-pareto-light: var(--pareto-light);
+  --color-text-dark: var(--text-dark);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Font families - will be configured after loading fonts */
+  --font-display: var(--font-mrs-pickles);
+  --font-sans: var(--font-open-sans);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
 }
