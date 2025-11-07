@@ -1,5 +1,8 @@
 import Link from "next/link";
 import RainbowText from "./RainbowText";
+import Dashboard from "@/app/dashboard";
+import React from "react";
+import { BrowserRouter as Router, Route} from "react-router-dom";
 
 const NAV_ITEMS = [
   { name: "Home", href: "/", color: "text-pareto-pink" },
