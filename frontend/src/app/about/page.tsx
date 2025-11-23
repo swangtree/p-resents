@@ -30,7 +30,7 @@ const frames: FrameCardData[] = [
     imageSrc: "/images/liam.jpeg",
     title: "Liam",
     subtitle: "GH: Liam Hochman\nFavorite gift:\nmonkey antiques.",
-    description: "As Web Dev Project Manger, I organized and led project members and developed the simulation's frontend and features.",
+    description: "As Web Dev Project Manager, I organized and led project members and developed the simulation's frontend and features.",
   },
   {
     id: 3,
@@ -46,7 +46,7 @@ const frames: FrameCardData[] = [
     frameSrc: "/assets/frame_0_3.svg",
     imageSrc: "/images/charlotte.jpeg",
     title: "Charlotte",
-    subtitle: "GH: Charlotte Wang\nFavorite gift:\npottery/art",
+    subtitle: "GH: CharlotteWangv587\nFavorite gift:\npottery/art",
     description:
       "I designed and implemented the dashboard and wired the frontend state to the API (group data, preferences, draw results).",
   },
@@ -64,7 +64,7 @@ const frames: FrameCardData[] = [
     imageSrc: "/images/stefanie.jpeg",
     title: "Stefanie",
     subtitle: "GH: stefanienguy\nFavorite gift:\nAnything tech",
-    description: "I designed the dasbhoard and Max Fairness Algorithm (how to make no one sad with the matching :) ).",
+    description: "I designed the dashboard and Max Fairness Algorithm (how to make no one sad with the matching :) ).",
   },
   {
     id: 7,
