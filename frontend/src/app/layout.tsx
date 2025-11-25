@@ -26,6 +26,22 @@ const mrsPickles = localFont({
   variable: "--font-mrs-pickles",
 });
 
+const chalkboard = localFont({
+  src: [
+    {
+      path: "../../public/fonts/ChalkboardSE-Regular.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/ChalkboardSE-Regular.woff",
+      weight: "400",
+      style: "normal",
+    },
+  ],
+  variable: "--font-chalk",
+});
+
 export const metadata: Metadata = {
   title: "Pareto Presents",
   description: "Helping you and your friends gift give (more optimally)",
@@ -39,7 +55,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${openSans.variable} ${mrsPickles.variable} antialiased`}
+        className={`${openSans.variable} ${mrsPickles.variable} ${chalkboard.variable} antialiased`}
       >
         {children}
       </body>
