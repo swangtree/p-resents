@@ -26,9 +26,25 @@
   /* Font families - will be configured after loading fonts */
   --font-display: var(--font-mrs-pickles);
   --font-sans: var(--font-open-sans);
+  --font-chalk: var(--font-chalk);
+
+}
+
+.chalk-text {
+  font-family: var(--font-chalk);
 }
 
 body {
   margin: 0;
   padding: 0;
+  min-height: 100%;
+  background-color: var(--pareto-dark);
+  color: white;
+  overflow-x: hidden;
+}
+
+html {
+  min-height: 100%;
+  background-color: var(--pareto-dark);
+  overflow-x: hidden;
 }
