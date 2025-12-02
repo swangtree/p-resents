@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase';
+import { SavePreferencesInput, SaveMatchResultsInput } from '@/types/database.types';
 
 export class SupabaseService {
   static async getGroupPreferences(groupId: string) {
@@ -12,7 +13,7 @@ export class SupabaseService {
     return data || [];
   }
 
-  static async savePreferences(preferences: any) {
+  static async savePreferences(preferences: SavePreferencesInput) {
     const supabase = createClient();
     
     // Use upsert with onConflict to handle insert or update
@@ -46,7 +47,7 @@ export class SupabaseService {
     }
   }
 
-  static async saveMatchResults(result: any) {
+  static async saveMatchResults(result: SaveMatchResultsInput) {
     const supabase = createClient();
     const { error } = await supabase
       .from('match_results')

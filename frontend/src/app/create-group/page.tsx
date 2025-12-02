@@ -95,9 +95,13 @@ export default function CreateGroupPage() {
       // Success! Show the group code and redirect
       alert(`Group created successfully! Your group code is: ${generatedCode}\n\nShare this code with others so they can join.`);
       router.push('/dashboard');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error creating group:', err);
-      setError(err.message || 'Failed to create group. Please try again.');
+      if (err instanceof Error) {
+        setError(err.message || 'Failed to create group. Please try again.');
+      } else {
+        setError('Failed to create group. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -167,7 +171,7 @@ export default function CreateGroupPage() {
               <ol className="space-y-3 chalk-text text-pareto-light/80 text-base">
                 <li className="flex gap-3">
                   <span className="font-display text-pareto-pink text-xl flex-shrink-0">1.</span>
-                  <span>You'll get a unique 6-digit group code</span>
+                  <span>You&apos;ll get a unique 6-digit group code</span>
                 </li>
                 <li className="flex gap-3">
                   <span className="font-display text-pareto-yellow text-xl flex-shrink-0">2.</span>
@@ -179,7 +183,7 @@ export default function CreateGroupPage() {
                 </li>
                 <li className="flex gap-3">
                   <span className="font-display text-pareto-blue text-xl flex-shrink-0">4.</span>
-                  <span>As the creator, you'll run the matching algorithm!</span>
+                  <span>As the creator, you&apos;ll run the matching algorithm!</span>
                 </li>
               </ol>
             </div>

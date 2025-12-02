@@ -1,3 +1,5 @@
+import { Pairing, RulesetStatistics } from './api.types';
+
 export type Json =
   | string
   | number
@@ -350,3 +352,56 @@ export const Constants = {
     Enums: {},
   },
 } as const
+
+export interface GroupMember {
+  id: string;
+  user_data: {
+    email: string;
+  };
+}
+
+export interface GroupPreview {
+  id: string;
+  name: string;
+  created_at: string;
+  memberCount?: number;
+}
+
+export interface MatchResults {
+  id: string;
+  group_id: string;
+  ruleset: string;
+  pairings: Pairing[] | null;
+  play_order: string[] | null;
+  statistics: RulesetStatistics[] | null;
+  seed: number | null;
+  created_at: string | null;
+  created_by: string | null;
+}
+
+export interface SavePreferencesInput {
+  user_id: string;
+  group_id: string;
+  preference_practicality_giving: number;
+  preference_novelty_giving: number;
+  preference_thoughtfulness_giving: number;
+  preference_practicality_receiving: number;
+  preference_novelty_receiving: number;
+  preference_thoughtfulness_receiving: number;
+  we_hate_being_stolen_from: number;
+  we_enjoy_stealing: number;
+  hate_missing_out: number;
+  enjoy_missing_out: number;
+  interests: string[];
+  exclusions: string[];
+}
+
+export interface SaveMatchResultsInput {
+  group_id: string;
+  ruleset: string;
+  pairings: Pairing[] | null;
+  play_order: string[] | null;
+  statistics: RulesetStatistics[] | null;
+  seed: number | null;
+  created_by: string | null;
+}

@@ -163,7 +163,7 @@ export default function Home() {
                     </h3>
                     <p className="chalk-text text-text-dark text-base">
                       Tell us your giving style and receiving preferences on a 1-5 scale. 
-                      Add interests and specify anyone you shouldn't be matched with.
+                      Add interests and specify anyone you shouldn&apos;t be matched with.
                     </p>
                   </div>
                 </div>
@@ -193,7 +193,7 @@ export default function Home() {
                     </h3>
                     <p className="chalk-text text-text-dark text-base">
                       Once finalized, everyone receives their match! For Secret Santa, 
-                      you'll see who you're giving to. For White Elephant, you'll see 
+                      you&apos;ll see who you&apos;re giving to. For White Elephant, you&apos;ll see 
                       your position in the play order.
                     </p>
                   </div>

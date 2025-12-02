@@ -7,6 +7,7 @@ import RainbowText from '@/components/RainbowText';
 import HanddrawnButton from '@/components/HanddrawnButton';
 import { createClient } from '@/lib/supabase';
 import { SupabaseService } from '@/services/supabase.service';
+import { GroupMember } from '@/types/database.types';
 
 export default function DashboardPage() {
   const [groupId, setGroupId] = useState<string | null>(null);
@@ -28,7 +29,7 @@ export default function DashboardPage() {
   const [newInterest, setNewInterest] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [groupMembers, setGroupMembers] = useState<any[]>([]);
+  const [groupMembers, setGroupMembers] = useState<GroupMember[]>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -114,11 +115,15 @@ export default function DashboardPage() {
       });
       
       alert('Preferences saved successfully!');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving preferences:', error);
       console.error('Error details:', JSON.stringify(error, null, 2));
-      const errorMessage = error?.message || error?.error_description || 'Unknown error';
+      if (error instanceof Error) {
+      const errorMessage = error?.message || 'Unknown error';
       alert(`Failed to save preferences: ${errorMessage}`);
+      } else {
+        alert('Failed to save preferences: Unknown error');
+      }
     } finally {
       setSaving(false);
     }
@@ -178,7 +183,7 @@ export default function DashboardPage() {
                 className="text-3xl sm:text-4xl md:text-5xl mb-4"
               />
               <p className="chalk-text text-pareto-light/80 text-lg">
-                You're not part of a group yet. Let's get you started!
+                You&apos;re not part of a group yet. Let&apos;s get you started!
               </p>
             </header>
 
@@ -207,13 +212,13 @@ export default function DashboardPage() {
 
               <div className="pt-6 border-t border-white/20">
                 <h3 className="font-display text-xl text-pareto-yellow mb-3">
-                  What's the difference?
+                  What&apos;s the difference?
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
                   <div className="bg-white/5 rounded-lg p-4">
                     <h4 className="font-display text-lg text-pareto-pink mb-2">Create</h4>
                     <p className="chalk-text text-pareto-light/80 text-sm">
-                      Start a new group, get a code, and invite others. You'll be the admin!
+                      Start a new group, get a code, and invite others. You&apos;ll be the admin!
                     </p>
                   </div>
                   <div className="bg-white/5 rounded-lg p-4">
@@ -459,7 +464,7 @@ export default function DashboardPage() {
                     className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-pareto-blue"
                   />
                   <div className="flex justify-between mt-2">
-                    <span className="chalk-text text-xs text-pareto-light/60">Don't mind</span>
+                    <span className="chalk-text text-xs text-pareto-light/60">Don&apos;t mind</span>
                     <span className="chalk-text text-xs text-pareto-light/60">Really dislike</span>
                   </div>
                 </div>
@@ -627,10 +632,10 @@ export default function DashboardPage() {
             {/* Exclusions */}
             <section className="bg-white/10 rounded-2xl p-6">
               <h3 className="font-display text-xl text-pareto-blue mb-2">
-                Don't Match Me With
+                Don&apos;t Match Me With
               </h3>
               <p className="chalk-text text-pareto-light/60 text-xs mb-4">
-                Select people you shouldn't be matched with
+                Select people you shouldn&apos;t be matched with
               </p>
               <div className="space-y-2">
                 {groupMembers
