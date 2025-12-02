@@ -31,7 +31,7 @@ export default function ResultsPage() {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        router.push('/');
+        router.push('/login');
         return;
       }
 
@@ -82,16 +82,16 @@ export default function ResultsPage() {
 
       const preferences = prefs.map(p => ({
         user_id: p.user_id,
-        giving_preferences: {
-          practicality: p.giving_practicality || 3,
-          novelty: p.giving_novelty || 3,
-          sentimentality: p.giving_sentimentality || 3,
-        },
-        receiving_preferences: {
-          practicality: p.receiving_practicality || 3,
-          novelty: p.receiving_novelty || 3,
-          sentimentality: p.receiving_sentimentality || 3,
-        },
+        preference_practicality_giving: p.preference_practicality_giving || 3,
+        preference_novelty_giving: p.preference_novelty_giving || 3,
+        preference_thoughtfulness_giving: p.preference_thoughtfulness_giving || 3,
+        preference_practicality_receiving: p.preference_practicality_receiving || 3,
+        preference_novelty_receiving: p.preference_novelty_receiving || 3,
+        preference_thoughtfulness_receiving: p.preference_thoughtfulness_receiving || 3,
+        we_hate_being_stolen_from: p.we_hate_being_stolen_from || 3,
+        we_enjoy_stealing: p.we_enjoy_stealing || 3,
+        hate_missing_out: p.hate_missing_out || 3,
+        enjoy_missing_out: p.enjoy_missing_out || 3,
         interests: p.interests || [],
         exclusions: p.exclusions || [],
       }));
@@ -127,16 +127,16 @@ export default function ResultsPage() {
       const prefs = await SupabaseService.getGroupPreferences(groupId);
       const preferences = prefs.map(p => ({
         user_id: p.user_id,
-        giving_preferences: {
-          practicality: p.giving_practicality || 3,
-          novelty: p.giving_novelty || 3,
-          sentimentality: p.giving_sentimentality || 3,
-        },
-        receiving_preferences: {
-          practicality: p.receiving_practicality || 3,
-          novelty: p.receiving_novelty || 3,
-          sentimentality: p.receiving_sentimentality || 3,
-        },
+        preference_practicality_giving: p.preference_practicality_giving || 3,
+        preference_novelty_giving: p.preference_novelty_giving || 3,
+        preference_thoughtfulness_giving: p.preference_thoughtfulness_giving || 3,
+        preference_practicality_receiving: p.preference_practicality_receiving || 3,
+        preference_novelty_receiving: p.preference_novelty_receiving || 3,
+        preference_thoughtfulness_receiving: p.preference_thoughtfulness_receiving || 3,
+        we_hate_being_stolen_from: p.we_hate_being_stolen_from || 3,
+        we_enjoy_stealing: p.we_enjoy_stealing || 3,
+        hate_missing_out: p.hate_missing_out || 3,
+        enjoy_missing_out: p.enjoy_missing_out || 3,
         interests: p.interests || [],
         exclusions: p.exclusions || [],
       }));

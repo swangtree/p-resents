@@ -3,34 +3,93 @@ import { RecalculateRequest, RecalculateResponse, FinalizeRequest, FinalizeRespo
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export class ApiService {
+  /**
+   * Calculate statistics for all matching algorithms
+   * No transformation needed - frontend now uses backend field names
+   */
   static async recalculate(request: RecalculateRequest): Promise<RecalculateResponse> {
-    const response = await fetch(`${API_URL}/recalculate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(request),
-    });
-    
-    if (!response.ok) throw new Error('Recalculate failed');
-    return response.json();
-  }
-
-  static async finalize(request: FinalizeRequest): Promise<FinalizeResponse> {
-    const response = await fetch(`${API_URL}/finalize`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(request),
-    });
-    
-    if (!response.ok) throw new Error('Finalize failed');
-    return response.json();
-  }
-
-  static async healthCheck(): Promise<boolean> {
     try {
-      const response = await fetch(`${API_URL}/`);
-      return response.ok;
-    } catch {
-      return false;
+      console.log('Sending to API:', request);
+      
+      const response = await fetch(`${API_URL}/recalculate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error(`API Error: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('API Response:', data);
+      
+      // Transform backend response if needed
+      if (data.statistics) {
+        return data; // Already in correct format
+      } else {
+        // Backend returns { "Random Matching": {...}, "Max Utility": {...} }
+        // Transform to { statistics: [...] }
+        const statistics = Object.entries(data).map(([ruleset_name, stats]: [string, any]) => ({
+          ruleset_name,
+          avg_utility: stats.avg_utility || 0,
+          min_utility: stats.min_utility || 0,
+          max_utility: stats.max_utility || 0,
+          std_utility: stats.std_utility || 0,
+          fairness_score: stats.fairness_score || 0,
+          expected_happiness: stats.expected_happiness,
+        }));
+        return { statistics };
+      }
+    } catch (error: any) {
+      console.error('Error in recalculate:', error);
+      throw new Error(
+        error.message || 'Failed to calculate statistics. Make sure the API is running at ' + API_URL
+      );
+    }
+  }
+
+  /**
+   * Finalize matching with selected algorithm
+   * No transformation needed - frontend now uses backend field names
+   */
+  static async finalize(request: FinalizeRequest): Promise<FinalizeResponse> {
+    try {
+      console.log('Sending to API:', request);
+      
+      // Backend uses /finalize_group endpoint
+      const response = await fetch(`${API_URL}/finalize_group`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error(`API Error: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('API Response:', data);
+      
+      // Add ruleset to response if not present
+      if (!data.ruleset) {
+        data.ruleset = request.ruleset;
+      }
+      
+      return data;
+    } catch (error: any) {
+      console.error('Error in finalize:', error);
+      throw new Error(
+        error.message || 'Failed to finalize match. Make sure the API is running at ' + API_URL
+      );
     }
   }
 }

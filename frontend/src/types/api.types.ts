@@ -1,15 +1,17 @@
+// API Type Definitions
+
 export interface UserPreferences {
     user_id: string;
-    giving_preferences: {
-      practicality: number;
-      novelty: number;
-      sentimentality: number;
-    };
-    receiving_preferences: {
-      practicality: number;
-      novelty: number;
-      sentimentality: number;
-    };
+    preference_practicality_giving: number;
+    preference_novelty_giving: number;
+    preference_thoughtfulness_giving: number;
+    preference_practicality_receiving: number;
+    preference_novelty_receiving: number;
+    preference_thoughtfulness_receiving: number;
+    we_hate_being_stolen_from: number;
+    we_enjoy_stealing: number;
+    hate_missing_out: number;
+    enjoy_missing_out: number;
     interests: string[];
     exclusions: string[];
   }
@@ -26,11 +28,10 @@ export interface UserPreferences {
     max_utility: number;
     std_utility: number;
     fairness_score: number;
-    expected_happiness?: number;
+    expected_happiness?: number; // For White Elephant
   }
   
   export interface RecalculateResponse {
-    group_id: string;
     statistics: RulesetStatistics[];
   }
   
@@ -38,7 +39,7 @@ export interface UserPreferences {
     group_id: string;
     ruleset: string;
     preferences: UserPreferences[];
-    seed?: number;
+    seed: number;
   }
   
   export interface Pairing {
@@ -48,9 +49,7 @@ export interface UserPreferences {
   }
   
   export interface FinalizeResponse {
-    group_id: string;
     ruleset: string;
     pairings?: Pairing[];
     play_order?: string[];
-    seed?: number;
   }

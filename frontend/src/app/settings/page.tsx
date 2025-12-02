@@ -28,7 +28,7 @@ export default function SettingsPage() {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        router.push('/');
+        router.push('/login');
         return;
       }
 
@@ -304,66 +304,41 @@ export default function SettingsPage() {
               </button>
             </section>
           ) : (
-            <>
-              {/* Create Group */}
+            <div className="space-y-6">
+              {/* Create Group Card */}
               <section className="bg-white/10 rounded-2xl p-6 sm:p-8">
-                <h2 className="font-display text-2xl sm:text-3xl text-pareto-green mb-6">
+                <h2 className="font-display text-2xl sm:text-3xl text-pareto-green mb-4">
                   Create a Group
                 </h2>
+                <p className="chalk-text text-pareto-light/80 text-base mb-6">
+                  Start a new gift exchange and get a code to share with others
+                </p>
                 
-                <div className="space-y-4">
-                  <div>
-                    <label className="chalk-text text-pareto-light text-sm block mb-2">
-                      Group Name
-                    </label>
-                    <input
-                      type="text"
-                      value={newGroupName}
-                      onChange={(e) => setNewGroupName(e.target.value)}
-                      placeholder="e.g., Family Gift Exchange 2024"
-                      className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg chalk-text text-pareto-light placeholder:text-pareto-light/40 focus:outline-none focus:border-pareto-green"
-                    />
-                  </div>
-
-                  <button
-                    onClick={handleCreateGroup}
-                    className="w-full bg-pareto-green text-pareto-light px-6 py-3 rounded-lg font-display text-lg hover:opacity-80 transition-opacity"
-                  >
-                    Create Group
-                  </button>
-                </div>
+                <button
+                  onClick={() => router.push('/create-group')}
+                  className="w-full bg-pareto-green text-pareto-light px-6 py-3 rounded-lg font-display text-lg hover:opacity-80 transition-opacity"
+                >
+                  Create New Group
+                </button>
               </section>
 
-              {/* Join Group */}
+              {/* Join Group Card */}
               <section className="bg-white/10 rounded-2xl p-6 sm:p-8">
-                <h2 className="font-display text-2xl sm:text-3xl text-pareto-blue mb-6">
+                <h2 className="font-display text-2xl sm:text-3xl text-pareto-blue mb-4">
                   Join a Group
                 </h2>
+                <p className="chalk-text text-pareto-light/80 text-base mb-6">
+                  Have a code from a friend? Enter it to join their group
+                </p>
                 
-                <div className="space-y-4">
-                  <div>
-                    <label className="chalk-text text-pareto-light text-sm block mb-2">
-                      Group Code
-                    </label>
-                    <input
-                      type="text"
-                      value={joinCode}
-                      onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                      placeholder="Enter 6-digit code"
-                      maxLength={6}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg chalk-text text-pareto-light text-2xl font-bold placeholder:text-pareto-light/40 focus:outline-none focus:border-pareto-blue uppercase"
-                    />
-                  </div>
-
-                  <button
-                    onClick={handleJoinGroup}
-                    className="w-full bg-pareto-blue text-pareto-light px-6 py-3 rounded-lg font-display text-lg hover:opacity-80 transition-opacity"
-                  >
-                    Join Group
-                  </button>
-                </div>
+                <button
+                  onClick={() => router.push('/join-group')}
+                  className="w-full bg-pareto-blue text-pareto-light px-6 py-3 rounded-lg font-display text-lg hover:opacity-80 transition-opacity"
+                >
+                  Join Existing Group
+                </button>
               </section>
-            </>
+            </div>
           )}
         </div>
 

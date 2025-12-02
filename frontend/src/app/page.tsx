@@ -1,66 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Sidebar from '@/components/Sidebar';
 import HanddrawnButton from '@/components/HanddrawnButton';
 import BlobBackground from '@/components/BlobBackground';
 import RainbowText from '@/components/RainbowText';
-import { createClient } from '@/lib/supabase'; // Import Supabase Client
 
 export default function Home() {
   const router = useRouter();
-  
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  
-  useEffect(() => {
-    // Check if user is logged in when the component mounts
-    const checkAuth = async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      setIsAuthenticated(!!user);
-    };
-    
-    checkAuth();
-  }, []);
-  
-  // Function to handle the primary button click based on auth status
-  const handlePrimaryClick = () => {
-    // If we are still loading auth status, do nothing
-    if (isAuthenticated === null) return; 
-
-    if (isAuthenticated) {
-      // If logged in, go to the main application page
-      router.push('/dashboard'); 
-    } else {
-      // If not logged in, go to the login/sign-up page
-      router.push('/login'); 
-    }
-  };
-  
-  // NEW HELPER: Handles the CTA section buttons, redirecting to login/dashboard
-  const handleCTAClick = (action?: 'create' | 'join') => {
-    if (isAuthenticated) {
-      // If logged in, go to the dashboard where they can see both options
-      router.push('/dashboard'); 
-    } else {
-      // If logged out, go to login. We can pass a parameter to tell the login page 
-      // where to redirect *after* successful authentication, or just default to /dashboard.
-      router.push(`/login?action=${action || 'start'}`);
-    }
-  };
-
-  // Show a loading state briefly while checking auth
-  if (isAuthenticated === null) {
-      return (
-        <div className="flex bg-pareto-dark min-h-screen items-center justify-center">
-          <main className="w-full text-center">
-            <p className="chalk-text text-pareto-light text-xl">Loading...</p>
-          </main>
-        </div>
-      );
-  }
 
   return (
     <div className="flex bg-pareto-dark min-h-screen">
@@ -83,11 +31,11 @@ export default function Home() {
 
               <div className="flex flex-col sm:flex-row gap-4">
                 <HanddrawnButton
-                  text={isAuthenticated ? "Go to Dashboard" : "Get Started"}
+                  text="Sign In"
                   fillColor="#39b16c"
                   borderColor="#f6f1ee"
                   textColor="#f6f1ee"
-                  onClick={handlePrimaryClick}
+                  onClick={() => router.push('/login')}
                 />
                 <HanddrawnButton
                   text="Learn More"
@@ -113,7 +61,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ... (What is Pareto Presents Section) ... */}
+        {/* What is Pareto Presents Section */}
         <section className="relative min-h-screen bg-pareto-yellow px-8 sm:px-16 py-12">
           <BlobBackground fillColor="#f6f1ee" />
           <div className="relative z-10 flex items-center justify-center min-h-screen">
@@ -140,9 +88,8 @@ export default function Home() {
                       Multiple Algorithms
                     </h3>
                     <p className="text-sm">
-                      Choose from Random Matching, **Max Utility** (highest total happiness), 
-                      **Max Fairness** (most equal happiness where everyone is satisfied), 
-                      or White Elephant simulation.
+                      Choose from Random Matching, Max Utility (best overall matches), 
+                      Max Fairness (most equal happiness), or White Elephant simulation.
                     </p>
                   </div>
 
@@ -255,11 +202,11 @@ export default function Home() {
 
               <div className="mt-12 text-center">
                 <HanddrawnButton
-                  text={isAuthenticated ? "Go to Dashboard" : "Start Now"}
+                  text="Get Started"
                   fillColor="#39b16c"
                   borderColor="#15131c"
                   textColor="#15131c"
-                  onClick={handlePrimaryClick}
+                  onClick={() => router.push('/login')}
                 />
               </div>
             </div>
@@ -274,37 +221,23 @@ export default function Home() {
               className="text-3xl sm:text-4xl md:text-5xl mb-6"
             />
             <p className="chalk-text text-pareto-light/80 text-lg mb-8">
-              Create happier gift exchanges
+              Join thousands using algorithms to create happier gift exchanges
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              {isAuthenticated ? (
-                // If logged in, show only one button to go to the dashboard
-                <HanddrawnButton
-                  text="Go to Dashboard"
-                  fillColor="#ff7eba"
-                  borderColor="#f6f1ee"
-                  textColor="#f6f1ee"
-                  onClick={handlePrimaryClick}
-                />
-              ) : (
-                // If logged out, show distinct actions leading to the login page
-                <>
-                  <HanddrawnButton
-                    text="Create a Group"
-                    fillColor="#ff7eba"
-                    borderColor="#f6f1ee"
-                    textColor="#f6f1ee"
-                    onClick={() => handleCTAClick('create')}
-                  />
-                  <HanddrawnButton
-                    text="Join a Group"
-                    fillColor="#6caade"
-                    borderColor="#f6f1ee"
-                    textColor="#f6f1ee"
-                    onClick={() => handleCTAClick('join')}
-                  />
-                </>
-              )}
+              <HanddrawnButton
+                text="Sign Up Free"
+                fillColor="#ff7eba"
+                borderColor="#f6f1ee"
+                textColor="#f6f1ee"
+                onClick={() => router.push('/login')}
+              />
+              <HanddrawnButton
+                text="Sign In"
+                fillColor="#6caade"
+                borderColor="#f6f1ee"
+                textColor="#f6f1ee"
+                onClick={() => router.push('/login')}
+              />
             </div>
           </div>
         </section>

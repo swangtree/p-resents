@@ -1,223 +1,659 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Sidebar from '@/components/Sidebar';
+import RainbowText from '@/components/RainbowText';
+import HanddrawnButton from '@/components/HanddrawnButton';
 import { createClient } from '@/lib/supabase';
-import RainbowText from '../../components/RainbowText';
-import HanddrawnButton from '../../components/HanddrawnButton';
-import Link from 'next/link';
-
-// Define the Group type based on your Supabase schema
-export interface Group {
-  id: string; // UUID
-  name: string;
-  group_code: string;
-  created_at: string;
-  created_by: string; // UUID
-}
-
-// NEW: Define the specific type for the profile query result
-type ProfileGroup = {
-  group_id: string | null;
-}
-
-
-// --- Dashboard Sub-Components (Views) ---
-
-// Component shown if the user is in a group
-const DashboardGroupView: React.FC<{ group: Group }> = ({ group }) => (
-  <div className="text-center">
-    <h2 className="chalk-text text-pareto-light text-2xl mb-4">
-      You are in: <RainbowText text={group.name} className="text-2xl" />
-    </h2>
-    
-    <p className="chalk-text text-pareto-light/80 text-xl mb-8">
-      Group Code: <span className="text-pareto-pink font-bold">{group.group_code}</span>
-    </p>
-
-    <div className="flex flex-col space-y-4 items-center">
-      {/* Example: Link to Preferences Page */}
-      <Link href="/preferences" passHref legacyBehavior>
-        <HanddrawnButton
-          text="Manage My Preferences"
-          fillColor="#6caade"
-          borderColor="#f6f1ee"
-          textColor="#f6f1ee"
-          type="button"
-        />
-      </Link>
-      
-      {/* Example: Link to Match Results Page */}
-      <Link href="/results" passHref legacyBehavior>
-        <HanddrawnButton
-          text="View Match Results"
-          fillColor="#39b16c"
-          borderColor="#15131c"
-          textColor="#15131c"
-          type="button"
-        />
-      </Link>
-    </div>
-  </div>
-);
-
-// Component shown if the user is NOT in a group
-const NoGroupView: React.FC = () => (
-  <div className="text-center">
-    <h2 className="chalk-text text-pareto-light text-2xl mb-6">
-      You are not currently in a group.
-    </h2>
-    
-    <div className="flex flex-col space-y-4 items-center">
-      <Link href="/create-group" passHref legacyBehavior>
-        <HanddrawnButton
-          text="Create a New Group"
-          fillColor="#ff7eba"
-          borderColor="#f6f1ee"
-          textColor="#f6f1ee"
-          type="button"
-        />
-      </Link>
-      
-      <Link href="/join-group" passHref legacyBehavior>
-        <HanddrawnButton
-          text="Join an Existing Group"
-          fillColor="#6caade"
-          borderColor="#f6f1ee"
-          textColor="#f6f1ee"
-          type="button"
-        />
-      </Link>
-    </div>
-  </div>
-);
-
-
-// --- Main Dashboard Page ---
+import { SupabaseService } from '@/services/supabase.service';
 
 export default function DashboardPage() {
-  const router = useRouter();
-  const supabase = createClient();
-  
+  const [groupId, setGroupId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [preferences, setPreferences] = useState({
+    preference_practicality_giving: 3,
+    preference_novelty_giving: 3,
+    preference_thoughtfulness_giving: 3,
+    preference_practicality_receiving: 3,
+    preference_novelty_receiving: 3,
+    preference_thoughtfulness_receiving: 3,
+    we_hate_being_stolen_from: 3,
+    we_enjoy_stealing: 3,
+    hate_missing_out: 3,
+    enjoy_missing_out: 3,
+    interests: [] as string[],
+    exclusions: [] as string[],
+  });
+  const [newInterest, setNewInterest] = useState('');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [userGroup, setUserGroup] = useState<Group | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [groupMembers, setGroupMembers] = useState<any[]>([]);
+  const router = useRouter();
 
-  // Function that performs the group query logic (the "QueryGroup" step)
-  const fetchGroupData = useCallback(async (userId: string) => {
-    
-    // 1. Fetch the user's profile to get the group_id
-    // FIX APPLIED: Explicitly using single<ProfileGroup>() to resolve the type error
-    const { data: profileData, error: profileError } = await supabase
-      .from('profile')
-      .select('group_id')
-      .eq('id', userId)
-      .single<ProfileGroup>(); 
-
-    if (profileError && profileError.code !== 'PGRST116') { // PGRST116 = No row found
-      // Log other non-not-found errors
-      console.error("Error fetching profile:", profileError);
-      setError("Failed to load user profile.");
-      setLoading(false);
-      return;
-    }
-
-    // profileData will be null if no row is found (PGRST116 error handled above)
-    if (!profileData || !profileData.group_id) {
-      // User is authenticated but not in a group
-      setUserGroup(null);
-      setLoading(false);
-      return;
-    }
-
-    // 2. Fetch the group details using the group_id
-    const { data: groupData, error: groupError } = await supabase
-      .from('groups')
-      .select('*')
-      .eq('id', profileData.group_id)
-      .single();
-
-    if (groupError) {
-      console.error("Error fetching group:", groupError);
-      setError("Failed to load group details.");
-      setUserGroup(null);
-    } else if (groupData) {
-      setUserGroup(groupData as Group); // Cast to Group type for safety
-    }
-
-    setLoading(false);
-
-  }, [supabase]);
-
-  // Main Effect: Check auth and initiate data fetch
   useEffect(() => {
-    const checkAuthAndFetchData = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+    loadUserData();
+  }, []);
 
+  const loadUserData = async () => {
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
       if (!user) {
-        // If not authenticated, redirect to login
         router.push('/login');
         return;
       }
 
-      await fetchGroupData(user.id);
-    };
+      setUserId(user.id);
 
-    checkAuthAndFetchData();
-  }, [router, supabase, fetchGroupData]);
+      const { data: profile } = await supabase
+        .from('profile')
+        .select('group_id')
+        .eq('id', user.id)
+        .single();
 
+      if (profile?.group_id) {
+        setGroupId(profile.group_id);
+        await loadPreferences(profile.group_id, user.id);
+        await loadGroupMembers(profile.group_id);
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // --- Render States ---
+  const loadPreferences = async (groupId: string, userId: string) => {
+    try {
+      const prefs = await SupabaseService.getGroupPreferences(groupId);
+      const userPref = prefs.find(p => p.user_id === userId);
+      if (userPref) {
+        setPreferences({
+          preference_practicality_giving: userPref.preference_practicality_giving || 3,
+          preference_novelty_giving: userPref.preference_novelty_giving || 3,
+          preference_thoughtfulness_giving: userPref.preference_thoughtfulness_giving || 3,
+          preference_practicality_receiving: userPref.preference_practicality_receiving || 3,
+          preference_novelty_receiving: userPref.preference_novelty_receiving || 3,
+          preference_thoughtfulness_receiving: userPref.preference_thoughtfulness_receiving || 3,
+          we_hate_being_stolen_from: userPref.we_hate_being_stolen_from || 3,
+          we_enjoy_stealing: userPref.we_enjoy_stealing || 3,
+          hate_missing_out: userPref.hate_missing_out || 3,
+          enjoy_missing_out: userPref.enjoy_missing_out || 3,
+          interests: userPref.interests || [],
+          exclusions: userPref.exclusions || [],
+        });
+      }
+    } catch (error) {
+      console.error('Error loading preferences:', error);
+    }
+  };
+
+  const loadGroupMembers = async (groupId: string) => {
+    try {
+      const members = await SupabaseService.getGroupMembers(groupId);
+      setGroupMembers(members);
+    } catch (error) {
+      console.error('Error loading group members:', error);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!groupId || !userId) {
+      alert('Missing group or user information');
+      return;
+    }
+    
+    setSaving(true);
+    try {
+      await SupabaseService.savePreferences({
+        user_id: userId,
+        group_id: groupId,
+        ...preferences,
+      });
+      
+      alert('Preferences saved successfully!');
+    } catch (error: any) {
+      console.error('Error saving preferences:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      const errorMessage = error?.message || error?.error_description || 'Unknown error';
+      alert(`Failed to save preferences: ${errorMessage}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const addInterest = () => {
+    if (newInterest.trim() && !preferences.interests.includes(newInterest.trim())) {
+      setPreferences({
+        ...preferences,
+        interests: [...preferences.interests, newInterest.trim()],
+      });
+      setNewInterest('');
+    }
+  };
+
+  const removeInterest = (interest: string) => {
+    setPreferences({
+      ...preferences,
+      interests: preferences.interests.filter(i => i !== interest),
+    });
+  };
+
+  const toggleExclusion = (memberId: string) => {
+    if (preferences.exclusions.includes(memberId)) {
+      setPreferences({
+        ...preferences,
+        exclusions: preferences.exclusions.filter(id => id !== memberId),
+      });
+    } else {
+      setPreferences({
+        ...preferences,
+        exclusions: [...preferences.exclusions, memberId],
+      });
+    }
+  };
 
   if (loading) {
     return (
       <div className="flex bg-pareto-dark min-h-screen items-center justify-center">
-        <main className="w-full text-center">
-          <p className="chalk-text text-pareto-light text-xl">
-            Loading Dashboard...
-          </p>
+        <Sidebar />
+        <main className="ml-[200px] w-full">
+          <p className="chalk-text text-pareto-light text-xl">Loading...</p>
         </main>
       </div>
     );
   }
 
-  if (error) {
-     return (
-      <div className="flex bg-pareto-dark min-h-screen items-center justify-center p-8">
-        <main className="w-full max-w-lg text-center">
-          <h1 className="font-display text-pareto-light text-4xl mb-8">
-            <RainbowText text="Dashboard Error" className="text-4xl" />
-          </h1>
-          <div className="bg-red-500/20 text-red-300 p-4 rounded-lg mb-6 chalk-text">
-            {error}
+  if (!groupId) {
+    return (
+      <div className="flex bg-pareto-dark min-h-screen">
+        <Sidebar />
+        <main className="ml-[200px] w-full p-8 flex items-center justify-center">
+          <div className="max-w-2xl w-full">
+            <header className="mb-8 text-center">
+              <RainbowText 
+                text="Welcome to Dashboard!" 
+                className="text-3xl sm:text-4xl md:text-5xl mb-4"
+              />
+              <p className="chalk-text text-pareto-light/80 text-lg">
+                You're not part of a group yet. Let's get you started!
+              </p>
+            </header>
+
+            <div className="bg-white/10 rounded-2xl p-8 text-center space-y-6">
+              <p className="chalk-text text-pareto-light text-base">
+                To use Pareto Presents, you need to either create a new gift exchange group 
+                or join an existing one with a group code.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+                <HanddrawnButton
+                  text="Create a Group"
+                  fillColor="#ff7eba"
+                  borderColor="#f6f1ee"
+                  textColor="#f6f1ee"
+                  onClick={() => router.push('/create-group')}
+                />
+                <HanddrawnButton
+                  text="Join a Group"
+                  fillColor="#6caade"
+                  borderColor="#f6f1ee"
+                  textColor="#f6f1ee"
+                  onClick={() => router.push('/join-group')}
+                />
+              </div>
+
+              <div className="pt-6 border-t border-white/20">
+                <h3 className="font-display text-xl text-pareto-yellow mb-3">
+                  What's the difference?
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                  <div className="bg-white/5 rounded-lg p-4">
+                    <h4 className="font-display text-lg text-pareto-pink mb-2">Create</h4>
+                    <p className="chalk-text text-pareto-light/80 text-sm">
+                      Start a new group, get a code, and invite others. You'll be the admin!
+                    </p>
+                  </div>
+                  <div className="bg-white/5 rounded-lg p-4">
+                    <h4 className="font-display text-lg text-pareto-blue mb-2">Join</h4>
+                    <p className="chalk-text text-pareto-light/80 text-sm">
+                      Have a code from a friend? Enter it to join their gift exchange.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <Link href="/" passHref legacyBehavior>
-            <HanddrawnButton
-                text="Go Home"
-                fillColor="#ff7eba"
-                borderColor="#f6f1ee"
-                textColor="#f6f1ee"
-                type="button"
-            />
-          </Link>
         </main>
       </div>
     );
   }
 
   return (
-    <div className="flex bg-pareto-dark min-h-screen items-center justify-center p-8">
-      <main className="w-full max-w-xl">
-        <h1 className="font-display text-pareto-light text-4xl text-center mb-10">
-            <RainbowText text="Your Group Dashboard" className="text-4xl" />
-        </h1>
-        
-        <div className="bg-pareto-light/10 p-8 rounded-xl border border-pareto-light/20 min-h-[300px] flex items-center justify-center">
-            {userGroup ? (
-                <DashboardGroupView group={userGroup} />
-            ) : (
-                <NoGroupView />
-            )}
+    <div className="flex bg-pareto-dark min-h-screen">
+      <Sidebar />
+      <main className="ml-[200px] w-full p-8">
+        <header className="mb-8">
+          <RainbowText 
+            text="Your Gift Preferences" 
+            className="text-3xl sm:text-4xl md:text-5xl mb-3"
+          />
+          <p className="chalk-text text-pareto-light/80 text-base sm:text-lg">
+            Tell us about your gifting style so we can make better matches!
+          </p>
+        </header>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl">
+          {/* Preferences Form */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Giving Preferences */}
+            <section className="bg-white/10 rounded-2xl p-6 sm:p-8">
+              <h2 className="font-display text-2xl sm:text-3xl text-pareto-pink mb-6">
+                Giving Preferences
+              </h2>
+              <p className="chalk-text text-pareto-light/80 text-sm mb-6">
+                How do you like to choose gifts for others?
+              </p>
+              
+              <div className="space-y-6">
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <label className="chalk-text text-pareto-light text-base">
+                      Practicality
+                    </label>
+                    <span className="font-display text-pareto-pink text-2xl">
+                      {preferences.preference_practicality_giving}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="5"
+                    value={preferences.preference_practicality_giving}
+                    onChange={(e) => setPreferences({
+                      ...preferences,
+                      preference_practicality_giving: parseInt(e.target.value)
+                    })}
+                    className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-pareto-pink"
+                  />
+                  <div className="flex justify-between mt-2">
+                    <span className="chalk-text text-xs text-pareto-light/60">Whimsical</span>
+                    <span className="chalk-text text-xs text-pareto-light/60">Super Useful</span>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <label className="chalk-text text-pareto-light text-base">
+                      Novelty
+                    </label>
+                    <span className="font-display text-pareto-pink text-2xl">
+                      {preferences.preference_novelty_giving}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="5"
+                    value={preferences.preference_novelty_giving}
+                    onChange={(e) => setPreferences({
+                      ...preferences,
+                      preference_novelty_giving: parseInt(e.target.value)
+                    })}
+                    className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-pareto-pink"
+                  />
+                  <div className="flex justify-between mt-2">
+                    <span className="chalk-text text-xs text-pareto-light/60">Classic</span>
+                    <span className="chalk-text text-xs text-pareto-light/60">Unique</span>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <label className="chalk-text text-pareto-light text-base">
+                      Sentimentality
+                    </label>
+                    <span className="font-display text-pareto-pink text-2xl">
+                      {preferences.preference_thoughtfulness_giving}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="5"
+                    value={preferences.preference_thoughtfulness_giving}
+                    onChange={(e) => setPreferences({
+                      ...preferences,
+                      preference_thoughtfulness_giving: parseInt(e.target.value)
+                    })}
+                    className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-pareto-pink"
+                  />
+                  <div className="flex justify-between mt-2">
+                    <span className="chalk-text text-xs text-pareto-light/60">Casual</span>
+                    <span className="chalk-text text-xs text-pareto-light/60">Meaningful</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Receiving Preferences */}
+            <section className="bg-white/10 rounded-2xl p-6 sm:p-8">
+              <h2 className="font-display text-2xl sm:text-3xl text-pareto-yellow mb-6">
+                Receiving Preferences
+              </h2>
+              <p className="chalk-text text-pareto-light/80 text-sm mb-6">
+                What kind of gifts do you appreciate most?
+              </p>
+              
+              <div className="space-y-6">
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <label className="chalk-text text-pareto-light text-base">
+                      Practicality
+                    </label>
+                    <span className="font-display text-pareto-yellow text-2xl">
+                      {preferences.preference_practicality_receiving}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="5"
+                    value={preferences.preference_practicality_receiving}
+                    onChange={(e) => setPreferences({
+                      ...preferences,
+                      preference_practicality_receiving: parseInt(e.target.value)
+                    })}
+                    className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-pareto-yellow"
+                  />
+                  <div className="flex justify-between mt-2">
+                    <span className="chalk-text text-xs text-pareto-light/60">Fun things</span>
+                    <span className="chalk-text text-xs text-pareto-light/60">Useful things</span>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <label className="chalk-text text-pareto-light text-base">
+                      Novelty
+                    </label>
+                    <span className="font-display text-pareto-yellow text-2xl">
+                      {preferences.preference_novelty_receiving}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="5"
+                    value={preferences.preference_novelty_receiving}
+                    onChange={(e) => setPreferences({
+                      ...preferences,
+                      preference_novelty_receiving: parseInt(e.target.value)
+                    })}
+                    className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-pareto-yellow"
+                  />
+                  <div className="flex justify-between mt-2">
+                    <span className="chalk-text text-xs text-pareto-light/60">Familiar</span>
+                    <span className="chalk-text text-xs text-pareto-light/60">Surprising</span>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <label className="chalk-text text-pareto-light text-base">
+                      Sentimentality
+                    </label>
+                    <span className="font-display text-pareto-yellow text-2xl">
+                      {preferences.preference_thoughtfulness_receiving}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="5"
+                    value={preferences.preference_thoughtfulness_receiving}
+                    onChange={(e) => setPreferences({
+                      ...preferences,
+                      preference_thoughtfulness_receiving: parseInt(e.target.value)
+                    })}
+                    className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-pareto-yellow"
+                  />
+                  <div className="flex justify-between mt-2">
+                    <span className="chalk-text text-xs text-pareto-light/60">Any gift</span>
+                    <span className="chalk-text text-xs text-pareto-light/60">Thoughtful</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* White Elephant Preferences */}
+            <section className="bg-white/10 rounded-2xl p-6 sm:p-8">
+              <h2 className="font-display text-2xl sm:text-3xl text-pareto-blue mb-6">
+                White Elephant Preferences
+              </h2>
+              <p className="chalk-text text-pareto-light/80 text-sm mb-6">
+                How do you feel about the White Elephant game dynamics?
+              </p>
+              
+              <div className="space-y-6">
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <label className="chalk-text text-pareto-light text-base">
+                      Hate Being Stolen From
+                    </label>
+                    <span className="font-display text-pareto-blue text-2xl">
+                      {preferences.we_hate_being_stolen_from}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="5"
+                    value={preferences.we_hate_being_stolen_from}
+                    onChange={(e) => setPreferences({
+                      ...preferences,
+                      we_hate_being_stolen_from: parseInt(e.target.value)
+                    })}
+                    className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-pareto-blue"
+                  />
+                  <div className="flex justify-between mt-2">
+                    <span className="chalk-text text-xs text-pareto-light/60">Don't mind</span>
+                    <span className="chalk-text text-xs text-pareto-light/60">Really dislike</span>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <label className="chalk-text text-pareto-light text-base">
+                      Enjoy Stealing
+                    </label>
+                    <span className="font-display text-pareto-blue text-2xl">
+                      {preferences.we_enjoy_stealing}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="5"
+                    value={preferences.we_enjoy_stealing}
+                    onChange={(e) => setPreferences({
+                      ...preferences,
+                      we_enjoy_stealing: parseInt(e.target.value)
+                    })}
+                    className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-pareto-blue"
+                  />
+                  <div className="flex justify-between mt-2">
+                    <span className="chalk-text text-xs text-pareto-light/60">Not my style</span>
+                    <span className="chalk-text text-xs text-pareto-light/60">Love it</span>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <label className="chalk-text text-pareto-light text-base">
+                      Hate Missing Out
+                    </label>
+                    <span className="font-display text-pareto-blue text-2xl">
+                      {preferences.hate_missing_out}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="5"
+                    value={preferences.hate_missing_out}
+                    onChange={(e) => setPreferences({
+                      ...preferences,
+                      hate_missing_out: parseInt(e.target.value)
+                    })}
+                    className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-pareto-blue"
+                  />
+                  <div className="flex justify-between mt-2">
+                    <span className="chalk-text text-xs text-pareto-light/60">Zen about it</span>
+                    <span className="chalk-text text-xs text-pareto-light/60">FOMO is real</span>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <label className="chalk-text text-pareto-light text-base">
+                      Enjoy Missing Out
+                    </label>
+                    <span className="font-display text-pareto-blue text-2xl">
+                      {preferences.enjoy_missing_out}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="5"
+                    value={preferences.enjoy_missing_out}
+                    onChange={(e) => setPreferences({
+                      ...preferences,
+                      enjoy_missing_out: parseInt(e.target.value)
+                    })}
+                    className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-pareto-blue"
+                  />
+                  <div className="flex justify-between mt-2">
+                    <span className="chalk-text text-xs text-pareto-light/60">Not at all</span>
+                    <span className="chalk-text text-xs text-pareto-light/60">JOMO vibes</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Interests */}
+            <section className="bg-white/10 rounded-2xl p-6 sm:p-8">
+              <h2 className="font-display text-2xl sm:text-3xl text-pareto-orange mb-6">
+                Your Interests
+              </h2>
+              <p className="chalk-text text-pareto-light/80 text-sm mb-6">
+                Add some interests to help match you better!
+              </p>
+              
+              <div className="flex gap-2 mb-4">
+                <input
+                  type="text"
+                  value={newInterest}
+                  onChange={(e) => setNewInterest(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && addInterest()}
+                  placeholder="e.g., hiking, cooking, gaming..."
+                  className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg chalk-text text-pareto-light placeholder:text-pareto-light/40 focus:outline-none focus:border-pareto-orange"
+                />
+                <button
+                  onClick={addInterest}
+                  className="px-6 py-2 bg-pareto-orange text-pareto-light font-display text-lg rounded-lg hover:opacity-80 transition-opacity"
+                >
+                  Add
+                </button>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {preferences.interests.map((interest, index) => (
+                  <span
+                    key={index}
+                    className="px-4 py-2 bg-pareto-orange/20 border border-pareto-orange/40 rounded-full chalk-text text-pareto-light text-sm flex items-center gap-2"
+                  >
+                    {interest}
+                    <button
+                      onClick={() => removeInterest(interest)}
+                      className="text-pareto-orange hover:text-pareto-light transition-colors"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+                {preferences.interests.length === 0 && (
+                  <p className="chalk-text text-pareto-light/60 text-sm italic">
+                    No interests added yet
+                  </p>
+                )}
+              </div>
+            </section>
+
+            {/* Save Button */}
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="w-full bg-pareto-green text-pareto-light px-8 py-4 rounded-xl font-display text-2xl hover:opacity-80 disabled:opacity-50 transition-opacity"
+            >
+              {saving ? 'Saving...' : 'Save Preferences'}
+            </button>
+          </div>
+
+          {/* Sidebar - Group Members & Exclusions */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Group Members */}
+            <section className="bg-white/10 rounded-2xl p-6">
+              <h3 className="font-display text-xl text-pareto-blue mb-4">
+                Group Members
+              </h3>
+              <div className="space-y-3">
+                {groupMembers.map((member) => (
+                  <div
+                    key={member.id}
+                    className="flex items-center justify-between p-3 bg-white/5 rounded-lg"
+                  >
+                    <span className="chalk-text text-pareto-light text-sm truncate">
+                      {member.user_data?.email || 'Unknown'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Exclusions */}
+            <section className="bg-white/10 rounded-2xl p-6">
+              <h3 className="font-display text-xl text-pareto-blue mb-2">
+                Don't Match Me With
+              </h3>
+              <p className="chalk-text text-pareto-light/60 text-xs mb-4">
+                Select people you shouldn't be matched with
+              </p>
+              <div className="space-y-2">
+                {groupMembers
+                  .filter(m => m.id !== userId)
+                  .map((member) => (
+                    <label
+                      key={member.id}
+                      className="flex items-center gap-3 p-2 hover:bg-white/5 rounded-lg cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={preferences.exclusions.includes(member.id)}
+                        onChange={() => toggleExclusion(member.id)}
+                        className="w-4 h-4 accent-pareto-blue"
+                      />
+                      <span className="chalk-text text-pareto-light text-sm truncate">
+                        {member.user_data?.email || 'Unknown'}
+                      </span>
+                    </label>
+                  ))}
+              </div>
+            </section>
+          </div>
         </div>
       </main>
     </div>
