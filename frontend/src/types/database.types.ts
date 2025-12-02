@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       groups: {
@@ -62,6 +37,106 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      match_results: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          group_id: string
+          id: string
+          pairings: Json | null
+          play_order: string[] | null
+          ruleset: string
+          seed: number | null
+          statistics: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          group_id: string
+          id?: string
+          pairings?: Json | null
+          play_order?: string[] | null
+          ruleset: string
+          seed?: number | null
+          statistics?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          group_id?: string
+          id?: string
+          pairings?: Json | null
+          play_order?: string[] | null
+          ruleset?: string
+          seed?: number | null
+          statistics?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_results_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      preferences: {
+        Row: {
+          created_at: string | null
+          exclusions: string[] | null
+          giving_novelty: number | null
+          giving_practicality: number | null
+          giving_sentimentality: number | null
+          group_id: string
+          id: string
+          interests: string[] | null
+          receiving_novelty: number | null
+          receiving_practicality: number | null
+          receiving_sentimentality: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          exclusions?: string[] | null
+          giving_novelty?: number | null
+          giving_practicality?: number | null
+          giving_sentimentality?: number | null
+          group_id: string
+          id?: string
+          interests?: string[] | null
+          receiving_novelty?: number | null
+          receiving_practicality?: number | null
+          receiving_sentimentality?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          exclusions?: string[] | null
+          giving_novelty?: number | null
+          giving_practicality?: number | null
+          giving_sentimentality?: number | null
+          group_id?: string
+          id?: string
+          interests?: string[] | null
+          receiving_novelty?: number | null
+          receiving_practicality?: number | null
+          receiving_sentimentality?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "preferences_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profile: {
         Row: {
@@ -271,9 +346,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },

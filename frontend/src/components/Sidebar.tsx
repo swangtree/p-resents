@@ -1,4 +1,8 @@
+'use client'; 
+// Added to enable usePathname hook
+
 import Link from "next/link";
+import { usePathname } from 'next/navigation'; // <-- NEW IMPORT
 import RainbowText from "./RainbowText";
 
 const NAV_ITEMS = [
@@ -10,6 +14,8 @@ const NAV_ITEMS = [
 ];
 
 export default function Sidebar() {
+  const pathname = usePathname(); // <-- NEW: Get current path
+
   return (
     <aside className="fixed left-0 top-0 h-screen w-[200px] bg-pareto-dark p-6 flex flex-col">
       {/* Logo */}
@@ -21,15 +27,27 @@ export default function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex flex-col gap-4">
-        {NAV_ITEMS.map((item) => (
-          <Link
-            key={item.name}
-            href={item.href}
-            className={`font-display text-xl ${item.color} no-underline hover:opacity-80 transition-opacity`}
-          >
-            {item.name}
-          </Link>
-        ))}
+        {NAV_ITEMS.map((item) => {
+            const isActive = pathname === item.href; // <-- NEW: Check if link is active
+            
+            return (
+                <Link
+                    key={item.name}
+                    href={item.href}
+                    // Apply different styles if active
+                    className={`
+                        font-display text-xl no-underline transition-all
+                        ${item.color} 
+                        ${isActive 
+                            ? "underline decoration-4 decoration-white/70 font-bold opacity-100" // Active style
+                            : "hover:opacity-80" // Inactive style
+                        }
+                    `}
+                >
+                    {item.name}
+                </Link>
+            );
+        })}
       </nav>
     </aside>
   );

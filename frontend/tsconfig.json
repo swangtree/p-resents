@@ -1,27 +1,50 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    // --- PATH RESOLUTION FIX ---
+    // Sets the base directory for resolving module names to the root of this tsconfig file (frontend/).
+    "baseUrl": ".",
+    // Maps the '@/' prefix used in imports to the './src/' directory.
+    // E.g., '@/types/database.types' resolves to './src/types/database.types'.
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    },
+    // ---------------------------
+    // --- STANDARD NEXT.JS CONFIG ---
+    "target": "es5",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
+    "forceConsistentCasingInFileNames": true,
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
-    "incremental": true,
+    "incremental": true
+    // -------------------------------
+    ,
     "plugins": [
       {
         "name": "next"
       }
-    ],
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    ]
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "next-env.d.ts",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }
