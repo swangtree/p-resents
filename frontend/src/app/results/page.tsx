@@ -8,6 +8,7 @@ import { ApiService } from '@/services/api.service';
 import { SupabaseService } from '@/services/supabase.service';
 import { createClient } from '@/lib/supabase';
 import { RecalculateResponse, FinalizeResponse } from '@/types/api.types';
+import { MatchResults } from '@/types/database.types';
 
 export default function ResultsPage() {
   const [groupId, setGroupId] = useState<string | null>(null);
@@ -15,7 +16,7 @@ export default function ResultsPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [statistics, setStatistics] = useState<RecalculateResponse | null>(null);
   const [results, setResults] = useState<FinalizeResponse | null>(null);
-  const [savedResults, setSavedResults] = useState<any>(null);
+  const [savedResults, setSavedResults] = useState<MatchResults | null>(null);
   const [selectedRuleset, setSelectedRuleset] = useState('');
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -160,10 +161,15 @@ export default function ResultsPage() {
 
       setResults(result);
       setSavedResults({
+        id: '',
+        group_id: groupId,
         ruleset: selectedRuleset,
-        pairings: result.pairings,
-        play_order: result.play_order,
-        statistics: statistics?.statistics,
+        pairings: result.pairings || null,
+        play_order: result.play_order || null,
+        statistics: statistics?.statistics || null,
+        seed: 42,
+        created_at: new Date().toISOString(),
+        created_by: userId,
       });
     } catch (error) {
       console.error('Error finalizing:', error);
@@ -194,7 +200,7 @@ export default function ResultsPage() {
           </h1>
           <div className="bg-white/10 rounded-lg p-8 max-w-2xl">
             <p className="chalk-text text-pareto-light text-lg">
-              You're not part of a group yet.
+              You&apos;re not part of a group yet.
             </p>
           </div>
         </main>
@@ -204,8 +210,8 @@ export default function ResultsPage() {
 
   // User view - show saved results
   if (!isAdmin && savedResults) {
-    const userPairing = savedResults.pairings?.find((p: any) => p.giver === userId);
-    const userPosition = savedResults.play_order?.indexOf(userId);
+    const userPairing = savedResults.pairings?.find((p) => p.giver === userId);
+    const userPosition = userId ? savedResults.play_order?.indexOf(userId) : undefined;
 
     return (
       <div className="flex bg-pareto-dark min-h-screen">
@@ -229,7 +235,7 @@ export default function ResultsPage() {
                 </h2>
                 <div className="bg-pareto-pink/20 border-2 border-pareto-pink rounded-xl p-6">
                   <p className="chalk-text text-pareto-light text-lg mb-2">
-                    You're giving a gift to:
+                    You&apos;re giving a gift to:
                   </p>
                   <p className="font-display text-4xl text-pareto-pink">
                     {userPairing.receiver}
@@ -248,13 +254,13 @@ export default function ResultsPage() {
                 </h2>
                 <div className="bg-pareto-yellow/20 border-2 border-pareto-yellow rounded-xl p-6">
                   <p className="chalk-text text-pareto-light text-lg mb-2">
-                    You're picking:
+                    You&apos;re picking:
                   </p>
                   <p className="font-display text-5xl text-pareto-yellow">
                     #{userPosition + 1}
                   </p>
                   <p className="chalk-text text-pareto-light/60 text-sm mt-4">
-                    Out of {savedResults.play_order.length} participants
+                    Out of {savedResults.play_order?.length || 0} participants
                   </p>
                 </div>
               </div>
@@ -313,7 +319,7 @@ export default function ResultsPage() {
               Results Already Finalized!
             </h3>
             <p className="chalk-text text-pareto-light text-base">
-              You've already run the matching with <span className="text-pareto-yellow">{savedResults.ruleset}</span>.
+              You&apos;ve already run the matching with <span className="text-pareto-yellow">{savedResults.ruleset}</span>.
               Calculate new statistics below if you want to re-run.
             </p>
           </div>

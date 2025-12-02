@@ -5,12 +5,13 @@ import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import RainbowText from '@/components/RainbowText';
 import { createClient } from '@/lib/supabase';
+import { GroupPreview } from '@/types/database.types';
 
 export default function JoinGroupPage() {
   const [groupCode, setGroupCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [groupPreview, setGroupPreview] = useState<any>(null);
+  const [groupPreview, setGroupPreview] = useState<GroupPreview | null>(null);
   const router = useRouter();
 
   const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,7 +62,7 @@ export default function JoinGroupPage() {
       } else {
         setGroupPreview(group);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error previewing group:', err);
       setError('Failed to find group. Please try again.');
     } finally {
@@ -113,9 +114,13 @@ export default function JoinGroupPage() {
       // Success!
       alert(`Successfully joined "${groupPreview.name}"!`);
       router.push('/dashboard');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error joining group:', err);
-      setError(err.message || 'Failed to join group. Please try again.');
+      if (err instanceof Error) {
+        setError(err.message || 'Failed to join group. Please try again.');
+      } else {
+        setError('Failed to join group. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

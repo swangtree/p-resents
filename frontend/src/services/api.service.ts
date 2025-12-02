@@ -1,4 +1,4 @@
-import { RecalculateRequest, RecalculateResponse, FinalizeRequest, FinalizeResponse } from '@/types/api.types';
+import { RecalculateRequest, RecalculateResponse, FinalizeRequest, FinalizeResponse, RulesetStatistics } from '@/types/api.types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -34,22 +34,28 @@ export class ApiService {
       } else {
         // Backend returns { "Random Matching": {...}, "Max Utility": {...} }
         // Transform to { statistics: [...] }
-        const statistics = Object.entries(data).map(([ruleset_name, stats]: [string, any]) => ({
-          ruleset_name,
-          avg_utility: stats.avg_utility || 0,
-          min_utility: stats.min_utility || 0,
-          max_utility: stats.max_utility || 0,
-          std_utility: stats.std_utility || 0,
-          fairness_score: stats.fairness_score || 0,
-          expected_happiness: stats.expected_happiness,
-        }));
+        const statistics = Object.entries(data).map(([ruleset_name, stats]) => {
+          const typedStats = stats as Omit<RulesetStatistics, 'ruleset_name'>;
+          return {
+            ruleset_name,
+            avg_utility: typedStats.avg_utility || 0,
+            min_utility: typedStats.min_utility || 0,
+            max_utility: typedStats.max_utility || 0,
+            std_utility: typedStats.std_utility || 0,
+            fairness_score: typedStats.fairness_score || 0,
+            expected_happiness: typedStats.expected_happiness,
+          };
+        });
         return { statistics };
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error in recalculate:', error);
-      throw new Error(
-        error.message || 'Failed to calculate statistics. Make sure the API is running at ' + API_URL
-      );
+      if (error instanceof Error) {
+      error.message || 'Failed to calculate statistics. Make sure the API is running at ' + API_URL
+      } else {
+        console.error('Unknown error type in recalculate');
+      }
+      throw new Error('Failed to calculate statistics. Make sure the API is running at ' + API_URL);
     }
   }
 
@@ -85,11 +91,14 @@ export class ApiService {
       }
       
       return data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error in finalize:', error);
-      throw new Error(
+      if (error instanceof Error) {
         error.message || 'Failed to finalize match. Make sure the API is running at ' + API_URL
-      );
+      } else {
+        console.error('Unknown error type in finalize');
+      }
+      throw new Error('Failed to finalize match. Make sure the API is running at ' + API_URL);
     }
   }
 }

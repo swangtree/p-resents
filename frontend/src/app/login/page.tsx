@@ -77,9 +77,13 @@ export default function LoginPage() {
           }, 500);
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Auth error:', error);
+      if (error instanceof Error) {
       setMessage(error.message || 'An error occurred');
+      } else {
+      setMessage('An error occurred');
+      }
     } finally {
       setLoading(false);
     }
@@ -98,9 +102,13 @@ export default function LoginPage() {
       });
 
       if (error) throw error;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Google sign in error:', error);
+      if (error instanceof Error) {
       setMessage(error.message || 'Failed to sign in with Google');
+      } else {
+      setMessage('Failed to sign in with Google');
+      }
       setLoading(false);
     }
   };

@@ -290,7 +290,7 @@ export default function SettingsPage() {
                 {isAdmin && (
                   <div className="px-4 py-3 bg-pareto-yellow/20 border border-pareto-yellow rounded-lg">
                     <p className="chalk-text text-pareto-yellow text-sm">
-                      ✓ You're the group admin
+                      ✓ You&apos;re the group admin
                     </p>
                   </div>
                 )}
