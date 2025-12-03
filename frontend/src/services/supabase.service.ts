@@ -92,4 +92,41 @@ export class SupabaseService {
       }
     }));
   }
+
+  static async getUserNames(userIds: string[]): Promise<Record<string, string>> {
+    console.log('🔍 Getting names for user IDs:', userIds);
+    const supabase = createClient();
+    
+    // Debug: Check each user ID individually first
+    for (const userId of userIds) {
+      const { data: singleProfile } = await supabase
+        .from('profile')
+        .select('id, name')
+        .eq('id', userId)
+        .maybeSingle();
+      console.log(`🔍 Individual check for ${userId}:`, singleProfile);
+    }
+    
+    const { data: profiles, error } = await supabase
+      .from('profile')
+      .select('id, name')
+      .in('id', userIds);
+    
+    console.log('📊 Batch query - Profiles found:', profiles?.length);
+    console.log('📊 Batch query - Full profiles:', profiles);
+    console.log('❌ Batch query - Error:', error);
+    
+    if (error) {
+      console.error('Error fetching user names:', error);
+      return {};
+    }
+    
+    const nameMap: Record<string, string> = {};
+    profiles?.forEach(profile => {
+      nameMap[profile.id] = profile.name || `User ${profile.id.slice(0, 8)}...`;
+    });
+    
+    console.log('🎯 Final name map:', nameMap);
+    return nameMap;
+  }
 }

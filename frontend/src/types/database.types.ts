@@ -88,45 +88,57 @@ export type Database = {
         Row: {
           created_at: string | null
           exclusions: string[] | null
-          giving_novelty: number | null
-          giving_practicality: number | null
-          giving_sentimentality: number | null
+          preference_practicality_giving: number | null
+          preference_novelty_giving: number | null
+          preference_thoughtfulness_giving: number | null
+          preference_practicality_receiving: number | null
+          preference_novelty_receiving: number | null
+          preference_thoughtfulness_receiving: number | null
+          we_hate_being_stolen_from: number | null
+          we_enjoy_stealing: number | null
+          hate_missing_out: number | null
+          enjoy_missing_out: number | null
           group_id: string
           id: string
           interests: string[] | null
-          receiving_novelty: number | null
-          receiving_practicality: number | null
-          receiving_sentimentality: number | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
           created_at?: string | null
           exclusions?: string[] | null
-          giving_novelty?: number | null
-          giving_practicality?: number | null
-          giving_sentimentality?: number | null
+          preference_practicality_giving?: number | null
+          preference_novelty_giving?: number | null
+          preference_thoughtfulness_giving?: number | null
+          preference_practicality_receiving?: number | null
+          preference_novelty_receiving?: number | null
+          preference_thoughtfulness_receiving?: number | null
+          we_hate_being_stolen_from?: number | null
+          we_enjoy_stealing?: number | null
+          hate_missing_out?: number | null
+          enjoy_missing_out?: number | null
           group_id: string
           id?: string
           interests?: string[] | null
-          receiving_novelty?: number | null
-          receiving_practicality?: number | null
-          receiving_sentimentality?: number | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
           created_at?: string | null
           exclusions?: string[] | null
-          giving_novelty?: number | null
-          giving_practicality?: number | null
-          giving_sentimentality?: number | null
+          preference_practicality_giving?: number | null
+          preference_novelty_giving?: number | null
+          preference_thoughtfulness_giving?: number | null
+          preference_practicality_receiving?: number | null
+          preference_novelty_receiving?: number | null
+          preference_thoughtfulness_receiving?: number | null
+          we_hate_being_stolen_from?: number | null
+          we_enjoy_stealing?: number | null
+          hate_missing_out?: number | null
+          enjoy_missing_out?: number | null
           group_id?: string
           id?: string
           interests?: string[] | null
-          receiving_novelty?: number | null
-          receiving_practicality?: number | null
-          receiving_sentimentality?: number | null
           updated_at?: string | null
           user_id?: string
         }
@@ -145,18 +157,21 @@ export type Database = {
           created_at: string | null
           group_id: string | null
           id: string
+          name: string | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           group_id?: string | null
           id?: string
+          name?: string | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           group_id?: string | null
           id?: string
+          name?: string | null
           updated_at?: string | null
         }
         Relationships: [
