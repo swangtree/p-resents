@@ -1,127 +1,106 @@
-import { RecalculateRequest, RecalculateResponse, FinalizeRequest, FinalizeResponse, RulesetStatistics } from '@/types/api.types';
+import { RecalculateRequest, RecalculateResponse, FinalizeRequest, FinalizeResponse, RulesetStatistics, Pairing } from '@/types/api.types';
 
-const API_URL = (process.env.NEXT_PUBLIC_API_URL as string | undefined) || 'http://localhost:8000';
+interface RulesetData {
+  group_satisfaction_score: number;
+  group_fairness_score: number;
+  min_utility: number;
+  max_utility: number;
+  std_dev: number;
+  user_stats: Record<string, unknown>;
+  avg_steals_per_game?: number;
+  max_steals_observed?: number;
+  simulations_run?: number;
+}
 
 export class ApiService {
-  /**
-   * Calculate statistics for all matching algorithms
-   * Transforms backend format to frontend format
-   */
+  private static API_URL = (process.env.NEXT_PUBLIC_API_URL as string | undefined) || 'http://localhost:8000';
+
   static async recalculate(request: RecalculateRequest): Promise<RecalculateResponse> {
-    try {
-      console.log('=== RECALCULATE REQUEST ===');
-      console.log('Sending to API:', JSON.stringify(request, null, 2));
+    console.log('=== RECALCULATE REQUEST ===');
+    console.log('Sending to API:', JSON.stringify(request, null, 2));
+
+    const response = await fetch(`${this.API_URL}/recalculate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    console.log('=== RAW API RESPONSE ===');
+    console.log(JSON.stringify(data, null, 2));
+
+    // Check if response has rulesets object that needs transformation
+    if (data.rulesets && typeof data.rulesets === 'object') {
+      console.log('✓ Transforming rulesets object to statistics array');
       
-      const response = await fetch(`${API_URL}/recalculate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(request),
+      // Transform the rulesets object into the expected statistics array format
+      const statistics: RulesetStatistics[] = Object.entries(data.rulesets).map(([ruleset_name, stats]) => {
+        const rulesetData = stats as RulesetData;
+        return {
+          ruleset_name,
+          avg_utility: rulesetData.group_satisfaction_score || 0,
+          min_utility: rulesetData.min_utility || 0,
+          max_utility: rulesetData.max_utility || 0,
+          std_utility: rulesetData.std_dev || 0,
+          fairness_score: rulesetData.group_fairness_score || 0,
+          expected_happiness: rulesetData.group_satisfaction_score || 0,
+        };
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API Error Response:', errorText);
-        throw new Error(`API Error: ${response.status} - ${errorText}`);
-      }
+      console.log('=== TRANSFORMED STATISTICS ===');
+      console.log(JSON.stringify(statistics, null, 2));
 
-      const data = await response.json();
-      console.log('=== RAW API RESPONSE ===');
-      console.log(JSON.stringify(data, null, 2));
-      
-      // Backend returns: { "rulesets": { "Random Matching": {...}, ... } }
-      // We need: { "statistics": [{ruleset_name: "...", ...}, ...] }
-      
-      if (data.rulesets) {
-        console.log('✓ Transforming rulesets object to statistics array');
-        
-        const statistics: RulesetStatistics[] = Object.entries(data.rulesets).map(([ruleset_name, stats]: [string, any]) => {
-          // Map backend field names to frontend field names
-          return {
-            ruleset_name,
-            avg_utility: stats.group_satisfaction_score || 0,
-            min_utility: stats.min_utility || 0,
-            max_utility: stats.max_utility || 0,
-            std_utility: stats.std_dev || 0,
-            fairness_score: stats.group_fairness_score || 0,
-            expected_happiness: stats.group_satisfaction_score, // For White Elephant
-          };
-        });
-        
-        console.log('=== TRANSFORMED STATISTICS ===');
-        console.log(JSON.stringify(statistics, null, 2));
-        
-        return { statistics };
-      } else if (data.statistics && Array.isArray(data.statistics)) {
-        console.log('✓ Response already has statistics array');
-        return data;
-      } else {
-        console.error('⚠ Unexpected response format');
-        throw new Error('Unexpected response format from API');
-      }
-    } catch (error: unknown) {
-      console.error('Error in recalculate:', error);
-      if (error instanceof Error) {
-        throw error;
-      } else {
-        throw new Error('Failed to calculate statistics. Make sure the API is running at ' + API_URL);
-      }
+      return {
+        statistics,
+      };
     }
+
+    // If response already has statistics array, return as-is
+    return data as RecalculateResponse;
   }
 
-  /**
-   * Finalize matching with selected algorithm
-   */
   static async finalize(request: FinalizeRequest): Promise<FinalizeResponse> {
-    try {
-      console.log('=== FINALIZE REQUEST ===');
-      console.log('Sending to API:', JSON.stringify(request, null, 2));
-      
-      // Backend uses /finalize_group endpoint
-      const response = await fetch(`${API_URL}/finalize_group`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(request),
-      });
+    console.log('=== FINALIZE REQUEST ===');
+    console.log('Sending to API:', JSON.stringify(request, null, 2));
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API Error Response:', errorText);
-        throw new Error(`API Error: ${response.status} - ${errorText}`);
-      }
+    const response = await fetch(`${this.API_URL}/finalize_group`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+    });
 
-      const data = await response.json();
-      console.log('=== FINALIZE API RESPONSE ===');
-      console.log(JSON.stringify(data, null, 2));
-      
-      // Transform pairings from object to array if needed
-      if (data.pairings && typeof data.pairings === 'object' && !Array.isArray(data.pairings)) {
-        console.log('✓ Transforming pairings object to array');
-        const pairingsArray = Object.entries(data.pairings).map(([giver, receiver]) => ({
-          giver,
-          receiver: receiver as string,
-          utility: 0, // Backend doesn't provide individual utility in finalize
-        }));
-        data.pairings = pairingsArray;
-        console.log('Transformed pairings:', pairingsArray);
-      }
-      
-      // Add ruleset to response if not present
-      if (!data.ruleset) {
-        data.ruleset = request.ruleset;
-      }
-      
-      return data;
-    } catch (error: unknown) {
-      console.error('Error in finalize:', error);
-      if (error instanceof Error) {
-        throw error;
-      } else {
-        throw new Error('Failed to finalize match. Make sure the API is running at ' + API_URL);
-      }
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
+
+    const data = await response.json();
+    
+    console.log('=== FINALIZE API RESPONSE ===');
+    console.log(JSON.stringify(data, null, 2));
+
+    // Check if pairings is an object that needs to be converted to array
+    if (data.pairings && typeof data.pairings === 'object' && !Array.isArray(data.pairings)) {
+      console.log('✓ Transforming pairings object to array');
+      
+      const pairingsArray: Pairing[] = Object.entries(data.pairings).map(([giver, receiver]) => ({
+        giver,
+        receiver: receiver as string,
+        utility: 0,
+      }));
+      
+      console.log('Transformed pairings:', pairingsArray);
+      data.pairings = pairingsArray;
+    }
+
+    return data as FinalizeResponse;
   }
 }

@@ -16,7 +16,7 @@ export default function SetupProfilePage() {
     e.preventDefault();
     
     if (!name.trim()) {
-      setError('Please enter your name');
+      setError('Name is required');
       return;
     }
 
@@ -37,21 +37,27 @@ export default function SetupProfilePage() {
         return;
       }
 
-      // Update profile with name
-      const { error: profileError } = await supabase
+      const { error: updateError } = await supabase
         .from('profile')
         .upsert({
           id: user.id,
           name: name.trim(),
+        }, {
+          onConflict: 'id'
         });
 
-      if (profileError) throw profileError;
+      if (updateError) {
+        throw updateError;
+      }
 
-      // Redirect to dashboard
       router.push('/dashboard');
-    } catch (err: any) {
-      console.error('Error saving name:', err);
-      setError(err.message || 'Failed to save name. Please try again.');
+    } catch (error: unknown) {
+      console.error('Error saving name:', error);
+      if (error instanceof Error) {
+        setError(error.message || 'Failed to save name. Please try again.');
+      } else {
+        setError('Failed to save name. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -61,39 +67,40 @@ export default function SetupProfilePage() {
     <div className="flex bg-pareto-dark min-h-screen">
       <Sidebar />
       <main className="ml-[200px] w-full flex items-center justify-center p-8">
-        <div className="max-w-2xl w-full">
+        <div className="max-w-md w-full">
           <header className="mb-8 text-center">
             <RainbowText 
               text="Welcome to Pareto Presents!" 
-              className="text-3xl sm:text-4xl md:text-5xl mb-3"
+              className="text-3xl sm:text-4xl mb-3"
             />
-            <p className="chalk-text text-pareto-light/80 text-base sm:text-lg">
-              Let's start by setting up your profile
+            <p className="chalk-text text-pareto-light/80 text-base">
+              Let&apos;s set up your profile to get started
             </p>
           </header>
 
           <div className="bg-white/10 rounded-2xl p-8">
             <form onSubmit={handleSaveName} className="space-y-6">
               <div>
-                <label className="chalk-text text-pareto-light text-lg block mb-3">
-                  What should we call you?
+                <label className="chalk-text text-pareto-light text-sm block mb-2">
+                  Your Name
                 </label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Enter your name"
+                  required
                   maxLength={50}
-                  className="w-full px-6 py-4 bg-white/5 border-2 border-white/20 rounded-xl chalk-text text-pareto-light text-lg placeholder:text-pareto-light/40 focus:outline-none focus:border-pareto-pink"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg chalk-text text-pareto-light placeholder:text-pareto-light/40 focus:outline-none focus:border-pareto-pink"
                 />
-                <p className="chalk-text text-pareto-light/60 text-sm mt-2">
-                  This will be displayed to other group members
+                <p className="chalk-text text-pareto-light/60 text-xs mt-2">
+                  This name will be visible to other group members
                 </p>
               </div>
 
               {error && (
-                <div className="bg-pareto-orange/20 border border-pareto-orange rounded-lg p-4">
-                  <p className="chalk-text text-pareto-orange text-sm">
+                <div className="p-4 rounded-lg bg-pareto-orange/20 border border-pareto-orange">
+                  <p className="chalk-text text-pareto-light text-sm">
                     {error}
                   </p>
                 </div>
@@ -102,34 +109,21 @@ export default function SetupProfilePage() {
               <button
                 type="submit"
                 disabled={loading || !name.trim()}
-                className="w-full bg-pareto-pink text-pareto-light px-8 py-4 rounded-xl font-display text-2xl hover:opacity-80 disabled:opacity-50 transition-opacity"
+                className="w-full bg-pareto-pink text-pareto-light px-6 py-3 rounded-lg font-display text-xl hover:opacity-80 disabled:opacity-50 transition-opacity"
               >
-                {loading ? 'Saving...' : 'Continue to Dashboard'}
+                {loading ? 'Saving...' : 'Continue'}
               </button>
             </form>
 
-            <div className="mt-8 pt-8 border-t border-white/20">
-              <h3 className="font-display text-xl text-pareto-yellow mb-4">
-                What's Next?
+            <div className="mt-8 p-6 bg-white/5 rounded-xl">
+              <h3 className="font-display text-xl text-pareto-blue mb-3">
+                What&apos;s Next?
               </h3>
-              <ol className="space-y-3 chalk-text text-pareto-light/80 text-base">
-                <li className="flex gap-3">
-                  <span className="font-display text-pareto-pink text-xl flex-shrink-0">1.</span>
-                  <span>Create or join a gift exchange group</span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="font-display text-pareto-yellow text-xl flex-shrink-0">2.</span>
-                  <span>Fill out your gift preferences</span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="font-display text-pareto-green text-xl flex-shrink-0">3.</span>
-                  <span>Wait for the group admin to run matching</span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="font-display text-pareto-blue text-xl flex-shrink-0">4.</span>
-                  <span>See who you&apos;re matched with!</span>
-                </li>
-              </ol>
+              <ul className="space-y-2 chalk-text text-pareto-light/80 text-sm">
+                <li>🎁 <span>Create or join a gift exchange group</span></li>
+                <li>⚡ <span>Fill out your preferences</span></li>
+                <li>🎯 <span>See who you&apos;re matched with!</span></li>
+              </ul>
             </div>
           </div>
         </div>
