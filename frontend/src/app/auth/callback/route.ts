@@ -1,48 +1,55 @@
-// This file MUST be placed at: app/auth/callback/route.ts
+import { createClient } from '@/lib/supabase'
+import { NextResponse } from 'next/server'
 
-import { createClient } from '@/lib/supabase';
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+export async function GET(request: Request) {
+  const { searchParams, origin } = new URL(request.url)
+  const code = searchParams.get('code')
+  const next = searchParams.get('next') ?? '/dashboard'
 
-export async function GET(request: NextRequest) {
-  const requestUrl = new URL(request.url);
-  const code = requestUrl.searchParams.get('code');
-  
-  // Set the default redirect destination
-  let redirectTo = '/dashboard'; 
-  
   if (code) {
-    const supabase = createClient();
-    
-    // Exchange the code for a session token
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const supabase = createClient()
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
     
     if (!error) {
-      // If successful, we need to ensure the profile exists (for OAuth sign-ups)
-      const { data: { user } } = await supabase.auth.getUser();
-
+      // Get user info
+      const { data: { user } } = await supabase.auth.getUser()
+      
       if (user) {
-        const { data: profile } = await supabase
+        console.log('User authenticated:', user.id)
+        
+        // Check if user has a profile with name
+        const { data: profile, error: profileError } = await supabase
           .from('profile')
-          .select('id')
+          .select('name')
           .eq('id', user.id)
-          .single();
-
-        // If the profile doesn't exist, create it immediately
-        if (!profile) {
-          // This handles user creation from OAuth or new user verification
-          await supabase
-            .from('profile')
-            .insert({ id: user.id });
+          .maybeSingle()
+        
+        console.log('Profile check:', { profile, profileError })
+        
+        // If no profile exists or no name, redirect to setup
+        if (!profile || !profile.name || profile.name.trim() === '') {
+          console.log('Redirecting to setup-profile: no name found')
+          return NextResponse.redirect(`${origin}/setup-profile`)
         }
+        
+        console.log('User has name, redirecting to dashboard')
       }
-      // Leave redirectTo as /dashboard
+      
+      const forwardedHost = request.headers.get('x-forwarded-host')
+      const isLocalEnv = process.env.NODE_ENV === 'development'
+      
+      if (isLocalEnv) {
+        return NextResponse.redirect(`${origin}${next}`)
+      } else if (forwardedHost) {
+        return NextResponse.redirect(`https://${forwardedHost}${next}`)
+      } else {
+        return NextResponse.redirect(`${origin}${next}`)
+      }
     } else {
-      // If there is an error during exchange (e.g., code expired), redirect to login with error
-      redirectTo = `/login?error=${encodeURIComponent(error.message)}`;
+      console.error('Auth error:', error)
     }
   }
 
-  // Redirect the user to the final application page
-  return NextResponse.redirect(new URL(redirectTo, request.url));
+  // Return the user to an error page with instructions
+  return NextResponse.redirect(`${origin}/auth/auth-code-error`)
 }

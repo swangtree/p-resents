@@ -9,6 +9,31 @@ import { createClient } from '@/lib/supabase';
 import { SupabaseService } from '@/services/supabase.service';
 import { GroupMember } from '@/types/database.types';
 
+export function useNameCheck() {
+  const router = useRouter();
+
+  useEffect(() => {
+    const checkName = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profile')
+          .select('name')
+          .eq('id', user.id)
+          .maybeSingle();
+        
+        if (!profile || !profile.name || profile.name.trim() === '') {
+          router.push('/setup-profile');
+        }
+      }
+    };
+
+    checkName();
+  }, [router]);
+}
+
 export default function DashboardPage() {
   const [groupId, setGroupId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
