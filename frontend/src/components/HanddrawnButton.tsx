@@ -1,9 +1,15 @@
-interface HanddrawnButtonProps {
+'use client';
+
+// 1. Import React (required for extending HTML attributes)
+import React from 'react'; 
+
+// 2. Extend React.ButtonHTMLAttributes to inherit standard props like 'type', 'disabled', etc.
+interface HanddrawnButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   text: string;
   fillColor?: string;
   borderColor?: string;
   textColor?: string;
-  onClick?: () => void;
+  // Note: We remove onClick here because it is already inherited from ButtonHTMLAttributes
 }
 
 export default function HanddrawnButton({
@@ -11,13 +17,17 @@ export default function HanddrawnButton({
   fillColor = "#ff7eba",
   borderColor = "#000000",
   textColor = "#000000",
-  onClick,
+  // 3. Destructure custom props, and collect all others (including onClick, type, disabled) in 'rest'
+  ...rest // <-- Captures all remaining props
 }: HanddrawnButtonProps) {
   return (
     <button
-      onClick={onClick}
-      className="relative inline-block hover:opacity-90 transition-opacity cursor-pointer border-none bg-transparent p-0"
-      style={{ width: "240px", height: "60px" }}
+      // Spread all remaining props onto the native button element
+      {...rest} 
+      
+      // Fixed: Removed hardcoded inline styles and replaced with Tailwind classes
+      // The parent button needs to be relative and the correct size for the SVG and text to align.
+      className="relative inline-block w-[240px] h-[60px] hover:opacity-90 transition-opacity cursor-pointer border-none bg-transparent p-0"
     >
       {/* SVG Button Shape */}
       <svg
@@ -36,7 +46,7 @@ export default function HanddrawnButton({
             x="3.5978856"
             y="2.3985903"
           />
-          {/* Border paths */}
+          {/* Border paths (rest of the SVG path data remains the same) */}
           
           <path
             style={{ fill: borderColor, strokeWidth: 1.10608 }}
@@ -54,12 +64,14 @@ export default function HanddrawnButton({
       </svg>
 
       {/* Button Text */}
-      <span
-        className="relative z-10 font-display uppercase text-base"
-        style={{ color: textColor }}
-      >
-        {text}
-      </span>
+      <div className="absolute inset-0 z-20 flex items-center justify-center">
+          <span
+            className="font-display uppercase text-base"
+            style={{ color: textColor }}
+          >
+            {text}
+          </span>
+      </div>
     </button>
   );
 }
