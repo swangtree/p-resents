@@ -13,12 +13,12 @@ const openSans = Open_Sans({
 const mrsPickles = localFont({
   src: [
     {
-      path: "../../public/fonts/MrsPickles-Regular.woff2",
+      path: "../public/fonts/MrsPickles-Regular.woff2",
       weight: "400",
       style: "normal",
     },
     {
-      path: "../../public/fonts/MrsPickles-Regular.woff",
+      path: "../public/fonts/MrsPickles-Regular.woff",
       weight: "400",
       style: "normal",
     },

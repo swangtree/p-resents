@@ -7,7 +7,7 @@
     // E.g., '@/types/database.types' resolves to './src/types/database.types'.
     "paths": {
       "@/*": [
-        "./src/*"
+        "./*"
       ]
     },
     // ---------------------------
