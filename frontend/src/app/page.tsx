@@ -2,7 +2,6 @@
 
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import Sidebar from '@/components/Sidebar';
 import HanddrawnButton from '@/components/HanddrawnButton';
 import BlobBackground from '@/components/BlobBackground';
 import RainbowText from '@/components/RainbowText';
@@ -12,8 +11,6 @@ export default function Home() {
 
   return (
     <div className="flex bg-pareto-dark min-h-screen">
-      <Sidebar />
-
       <main className="ml-[200px] w-full">
         {/* Hero Section */}
         <section className="min-h-screen bg-pareto-dark flex items-center px-8 sm:px-16 py-12">

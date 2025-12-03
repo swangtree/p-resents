@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Sidebar from '@/components/Sidebar';
 import RainbowText from '@/components/RainbowText';
 import HanddrawnButton from '@/components/HanddrawnButton';
 import { createClient } from '@/lib/supabase';
@@ -163,7 +162,6 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex bg-pareto-dark min-h-screen items-center justify-center">
-        <Sidebar />
         <main className="ml-[200px] w-full">
           <p className="chalk-text text-pareto-light text-xl">Loading...</p>
         </main>
@@ -174,7 +172,6 @@ export default function DashboardPage() {
   if (!groupId) {
     return (
       <div className="flex bg-pareto-dark min-h-screen">
-        <Sidebar />
         <main className="ml-[200px] w-full p-8 flex items-center justify-center">
           <div className="max-w-2xl w-full">
             <header className="mb-8 text-center">
@@ -238,7 +235,6 @@ export default function DashboardPage() {
 
   return (
     <div className="flex bg-pareto-dark min-h-screen">
-      <Sidebar />
       <main className="ml-[200px] w-full p-8">
         <header className="mb-8">
           <RainbowText 

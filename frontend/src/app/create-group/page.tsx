@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Sidebar from '@/components/Sidebar';
 import RainbowText from '@/components/RainbowText';
 import { createClient } from '@/lib/supabase';
 
@@ -109,7 +108,6 @@ export default function CreateGroupPage() {
 
   return (
     <div className="flex bg-pareto-dark min-h-screen">
-      <Sidebar />
       <main className="ml-[200px] w-full flex items-center justify-center p-8">
         <div className="max-w-2xl w-full">
           <header className="mb-8 text-center">

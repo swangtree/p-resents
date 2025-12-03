@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Sidebar from '@/components/Sidebar';
 import RainbowText from '@/components/RainbowText';
 import { ApiService } from '@/services/api.service';
 import { SupabaseService } from '@/services/supabase.service';
@@ -182,7 +181,6 @@ export default function ResultsPage() {
   if (initialLoading) {
     return (
       <div className="flex bg-pareto-dark min-h-screen items-center justify-center">
-        <Sidebar />
         <main className="ml-[200px] w-full">
           <p className="chalk-text text-pareto-light text-xl">Loading...</p>
         </main>
@@ -193,7 +191,6 @@ export default function ResultsPage() {
   if (!groupId) {
     return (
       <div className="flex bg-pareto-dark min-h-screen">
-        <Sidebar />
         <main className="ml-[200px] w-full p-8">
           <h1 className="font-display text-4xl text-pareto-light mb-8">
             Results
@@ -215,7 +212,6 @@ export default function ResultsPage() {
 
     return (
       <div className="flex bg-pareto-dark min-h-screen">
-        <Sidebar />
         <main className="ml-[200px] w-full p-8">
           <header className="mb-8">
             <RainbowText 
@@ -275,7 +271,6 @@ export default function ResultsPage() {
   if (!isAdmin) {
     return (
       <div className="flex bg-pareto-dark min-h-screen">
-        <Sidebar />
         <main className="ml-[200px] w-full p-8">
           <header className="mb-8">
             <RainbowText 
@@ -300,7 +295,6 @@ export default function ResultsPage() {
   // Admin view
   return (
     <div className="flex bg-pareto-dark min-h-screen">
-      <Sidebar />
       <main className="ml-[200px] w-full p-8">
         <header className="mb-8">
           <RainbowText 
