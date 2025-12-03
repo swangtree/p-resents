@@ -14,6 +14,17 @@ export default function LoginPage() {
   const [message, setMessage] = useState('');
   const router = useRouter();
 
+  const checkUserName = async (userId: string): Promise<boolean> => {
+    const supabase = createClient();
+    const { data: profile } = await supabase
+      .from('profile')
+      .select('name')
+      .eq('id', userId)
+      .maybeSingle();
+    
+    return profile && profile.name && profile.name.trim() !== '';
+  };
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -28,7 +39,6 @@ export default function LoginPage() {
           email,
           password,
           options: {
-            // NOTE: Ensure this path is correct
             emailRedirectTo: `${window.location.origin}/auth/callback`,
           },
         });
@@ -36,7 +46,7 @@ export default function LoginPage() {
         if (error) throw error;
 
         if (data.user) {
-          // Create profile entry
+          // Create profile entry without name
           const { error: profileError } = await supabase
             .from('profile')
             .insert({ id: data.user.id });
@@ -45,7 +55,17 @@ export default function LoginPage() {
             console.error('Profile creation error:', profileError);
           }
 
-          setMessage('Account created! Please check your email to verify your account.');
+          // Check if email confirmation is enabled
+          if (data.user.email_confirmed_at) {
+            // No email confirmation - redirect to name setup
+            setMessage('Account created! Setting up your profile...');
+            setTimeout(() => {
+              router.push('/setup-profile');
+            }, 1000);
+          } else {
+            // Email confirmation enabled
+            setMessage('Account created! Please check your email to verify your account, then you&apos;ll be asked to set up your profile.');
+          }
         }
       } else {
         // Sign in
@@ -57,12 +77,12 @@ export default function LoginPage() {
         if (error) throw error;
 
         if (data.user) {
-          // Ensure profile exists (Good for existing OAuth users logging in via email later)
+          // Ensure profile exists
           const { data: profile } = await supabase
             .from('profile')
-            .select('id')
+            .select('id, name')
             .eq('id', data.user.id)
-            .single();
+            .maybeSingle();
 
           if (!profile) {
             await supabase
@@ -70,19 +90,25 @@ export default function LoginPage() {
               .insert({ id: data.user.id });
           }
 
+          // Check if user has a name
+          const hasName = await checkUserName(data.user.id);
+          
           setMessage('Logged in successfully!');
           setTimeout(() => {
-            // EDITED: Redirect to dashboard after successful login
-            router.push('/dashboard'); 
+            if (hasName) {
+              router.push('/dashboard');
+            } else {
+              router.push('/setup-profile');
+            }
           }, 500);
         }
       }
     } catch (error: unknown) {
       console.error('Auth error:', error);
       if (error instanceof Error) {
-      setMessage(error.message || 'An error occurred');
+        setMessage(error.message || 'An error occurred');
       } else {
-      setMessage('An error occurred');
+        setMessage('An error occurred');
       }
     } finally {
       setLoading(false);
@@ -96,18 +122,18 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          // NOTE: Ensure this path is correct
           redirectTo: `${window.location.origin}/auth/callback`,
         },
       });
 
       if (error) throw error;
+      // Note: OAuth redirect will be handled by the callback
     } catch (error: unknown) {
       console.error('Google sign in error:', error);
       if (error instanceof Error) {
-      setMessage(error.message || 'Failed to sign in with Google');
+        setMessage(error.message || 'Failed to sign in with Google');
       } else {
-      setMessage('Failed to sign in with Google');
+        setMessage('Failed to sign in with Google');
       }
       setLoading(false);
     }
@@ -235,7 +261,7 @@ export default function LoginPage() {
               >
                 {isSignUp 
                   ? "Already have an account? Sign in" 
-                  : "Don't have an account? Sign up"}
+                  : "Do not have an account? Sign up"}
               </button>
             </div>
           </div>

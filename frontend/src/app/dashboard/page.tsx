@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase';
 import { SupabaseService } from '@/services/supabase.service';
 import { GroupMember } from '@/types/database.types';
 
+
 export default function DashboardPage() {
   const [groupId, setGroupId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);

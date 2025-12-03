@@ -7,21 +7,32 @@ import RainbowText from '@/components/RainbowText';
 import { ApiService } from '@/services/api.service';
 import { SupabaseService } from '@/services/supabase.service';
 import { createClient } from '@/lib/supabase';
-import { RecalculateResponse, FinalizeResponse } from '@/types/api.types';
+import { RecalculateResponse, FinalizeResponse, Pairing } from '@/types/api.types';
 import { MatchResults } from '@/types/database.types';
+
+interface PairingWithNames extends Pairing {
+  giverName?: string;
+  receiverName?: string;
+}
+
+interface FinalizeResponseWithNames extends Omit<FinalizeResponse, 'pairings'> {
+  pairings?: PairingWithNames[] | null;
+}
 
 export default function ResultsPage() {
   const [groupId, setGroupId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [statistics, setStatistics] = useState<RecalculateResponse | null>(null);
-  const [results, setResults] = useState<FinalizeResponse | null>(null);
+  const [results, setResults] = useState<FinalizeResponseWithNames | null>(null);
   const [savedResults, setSavedResults] = useState<MatchResults | null>(null);
   const [selectedRuleset, setSelectedRuleset] = useState('');
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [userNames, setUserNames] = useState<Record<string, string>>({});
   const router = useRouter();
 
+  
   useEffect(() => {
     loadUserData();
   }, []);
@@ -35,15 +46,15 @@ export default function ResultsPage() {
         router.push('/login');
         return;
       }
-
+  
       setUserId(user.id);
-
+  
       const { data: profile } = await supabase
         .from('profile')
         .select('group_id')
         .eq('id', user.id)
         .single();
-
+  
       if (profile?.group_id) {
         setGroupId(profile.group_id);
         
@@ -55,11 +66,29 @@ export default function ResultsPage() {
           .single();
         
         setIsAdmin(group?.created_by === user.id);
-
+  
         // Load existing results
         const existingResults = await SupabaseService.getMatchResults(profile.group_id);
         if (existingResults) {
           setSavedResults(existingResults);
+          
+          // DEBUG: Load names for existing results
+          console.log('🔍 Full existing results:', existingResults);
+          if (existingResults.pairings && Array.isArray(existingResults.pairings)) {
+            console.log('🔍 Existing pairings:', existingResults.pairings);
+            const allUserIds = existingResults.pairings.flatMap((p: Pairing) => [p.giver, p.receiver]);
+            console.log('🔍 User IDs to fetch names for:', allUserIds);
+            const nameMap = await SupabaseService.getUserNames(allUserIds);
+            setUserNames(nameMap);
+          } else {
+            console.log('❌ Pairings not an array or missing:', existingResults.pairings);
+          }
+          
+          if (existingResults.play_order) {
+            console.log('🔍 Loading names for play order:', existingResults.play_order);
+            const nameMap = await SupabaseService.getUserNames(existingResults.play_order);
+            setUserNames(prev => ({ ...prev, ...nameMap }));
+          }
         }
       }
     } catch (error) {
@@ -105,7 +134,7 @@ export default function ResultsPage() {
       setStatistics(stats);
     } catch (error) {
       console.error('Error calculating statistics:', error);
-      alert('Failed to calculate statistics. Make sure the API is running at ' + (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'));
+      alert('Failed to calculate statistics. Make sure the API is running at ' + ((process.env.NEXT_PUBLIC_API_URL as string | undefined) || 'http://localhost:8000'));
     } finally {
       setLoading(false);
     }
@@ -149,6 +178,30 @@ export default function ResultsPage() {
         seed: 42,
       });
 
+      // Load names for the results
+      const nameMap: Record<string, string> = {};
+      if (result.pairings) {
+        const allUserIds = result.pairings.flatMap(p => [p.giver, p.receiver]);
+        const fetchedNames = await SupabaseService.getUserNames(allUserIds);
+        Object.assign(nameMap, fetchedNames);
+        
+        // Add names to pairings for display
+        const pairingsWithNames: PairingWithNames[] = result.pairings.map(pairing => ({
+          ...pairing,
+          giverName: fetchedNames[pairing.giver] || pairing.giver,
+          receiverName: fetchedNames[pairing.receiver] || pairing.receiver,
+        }));
+        
+        result.pairings = pairingsWithNames;
+      }
+      
+      if (result.play_order) {
+        const fetchedNames = await SupabaseService.getUserNames(result.play_order);
+        Object.assign(nameMap, fetchedNames);
+      }
+      
+      setUserNames(prev => ({ ...prev, ...nameMap }));
+
       await SupabaseService.saveMatchResults({
         group_id: groupId,
         ruleset: selectedRuleset,
@@ -177,6 +230,10 @@ export default function ResultsPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const getUserDisplayName = (userId: string): string => {
+    return userNames[userId] || `User ${userId.slice(0, 8)}...`;
   };
 
   if (initialLoading) {
@@ -210,8 +267,10 @@ export default function ResultsPage() {
 
   // User view - show saved results
   if (!isAdmin && savedResults) {
-    const userPairing = savedResults.pairings?.find((p) => p.giver === userId);
-    const userPosition = userId ? savedResults.play_order?.indexOf(userId) : undefined;
+    const userPairing = savedResults.pairings && Array.isArray(savedResults.pairings) 
+      ? savedResults.pairings.find((p: Pairing) => p.giver === userId)
+      : null;
+    const userPosition = userId && savedResults.play_order ? savedResults.play_order.indexOf(userId) : -1;
 
     return (
       <div className="flex bg-pareto-dark min-h-screen">
@@ -238,10 +297,10 @@ export default function ResultsPage() {
                     You&apos;re giving a gift to:
                   </p>
                   <p className="font-display text-4xl text-pareto-pink">
-                    {userPairing.receiver}
+                    {getUserDisplayName(userPairing.receiver)}
                   </p>
                   <p className="chalk-text text-pareto-light/60 text-sm mt-4">
-                    Match quality score: {userPairing.utility.toFixed(2)}
+                    Match quality score: {userPairing.utility?.toFixed(2) || '0.00'}
                   </p>
                 </div>
               </div>
@@ -427,16 +486,16 @@ export default function ResultsPage() {
                     Secret Santa Pairings:
                   </h3>
                   <div className="space-y-3">
-                    {results.pairings.map((pairing, i) => (
+                    {results.pairings.map((pairing: PairingWithNames, i) => (
                       <div 
                         key={i}
                         className="flex items-center justify-between p-4 bg-white/5 rounded-lg"
                       >
                         <span className="chalk-text text-pareto-light">
-                          {pairing.giver} → {pairing.receiver}
+                          {pairing.giverName || getUserDisplayName(pairing.giver)} → {pairing.receiverName || getUserDisplayName(pairing.receiver)}
                         </span>
                         <span className="chalk-text text-pareto-light/60 text-sm">
-                          utility: {pairing.utility.toFixed(2)}
+                          utility: {pairing.utility?.toFixed(2) || '0.00'}
                         </span>
                       </div>
                     ))}
@@ -450,7 +509,7 @@ export default function ResultsPage() {
                     White Elephant Play Order:
                   </h3>
                   <ol className="space-y-3">
-                    {results.play_order.map((userId, i) => (
+                    {results.play_order.map((userId: string, i) => (
                       <li 
                         key={i}
                         className="flex items-center gap-4 p-4 bg-white/5 rounded-lg"
@@ -459,7 +518,7 @@ export default function ResultsPage() {
                           #{i + 1}
                         </span>
                         <span className="chalk-text text-pareto-light">
-                          {userId}
+                          {getUserDisplayName(userId)}
                         </span>
                       </li>
                     ))}
