@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "vercel-build": "ls -la && next build",
+    "vercel-build": "echo '___DEBUG_START___' && pwd && ls -R && echo '___DEBUG_END___' && next build",
     "start": "next start",
     "lint": "eslint"
   },
