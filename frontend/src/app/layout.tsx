@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Open_Sans } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
+import Sidebar from "@/components/Sidebar";
 
 const openSans = Open_Sans({
   variable: "--font-open-sans",
@@ -41,7 +42,10 @@ export default function RootLayout({
       <body
         className={`${openSans.variable} ${mrsPickles.variable} antialiased`}
       >
-        {children}
+        <Sidebar />
+        <main className="md:ml-[200px] transition-all duration-300 p-6">
+          {children}
+        </main>
       </body>
     </html>
   );

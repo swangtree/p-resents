@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import Sidebar from "@/components/Sidebar";
 import RainbowText from "@/components/RainbowText";
 
 type FrameCardData = {
@@ -205,7 +204,6 @@ function FrameCard({ frame }: { frame: FrameCardData }) {
 export default function AboutPage() {
   return (
     <div className="flex bg-pareto-dark text-white min-h-screen">
-      <Sidebar />
 
       <main className="w-full ml-[200px]">
         <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-10 py-12 sm:py-16">

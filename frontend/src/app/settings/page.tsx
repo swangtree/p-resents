@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Sidebar from '@/components/Sidebar';
 import RainbowText from '@/components/RainbowText';
 import { createClient } from '@/lib/supabase';
 
@@ -193,8 +192,7 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="flex bg-pareto-dark min-h-screen items-center justify-center">
-        <Sidebar />
-        <main className="ml-[200px] w-full">
+        <main className="ml-0 lg:ml-[200px] w-full px-4">
           <p className="chalk-text text-pareto-light text-xl">Loading...</p>
         </main>
       </div>
@@ -202,41 +200,40 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="flex bg-pareto-dark min-h-screen">
-      <Sidebar />
-      <main className="ml-[200px] w-full p-8">
-        <header className="mb-8">
+    <div className="flex bg-pareto-dark min-h-screen overflow-x-hidden">
+      <main className="ml-0 lg:ml-[200px] w-full p-4 sm:p-6 lg:p-8">
+        <header className="mb-6 sm:mb-8">
           <RainbowText 
             text="Settings" 
             className="text-3xl sm:text-4xl md:text-5xl mb-3"
           />
-          <p className="chalk-text text-pareto-light/80 text-base sm:text-lg">
+          <p className="chalk-text text-pareto-light/80 text-sm sm:text-base lg:text-lg">
             Manage your account and group settings
           </p>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 max-w-6xl">
           {/* Account Settings */}
-          <section className="bg-white/10 rounded-2xl p-6 sm:p-8">
-            <h2 className="font-display text-2xl sm:text-3xl text-pareto-pink mb-6">
+          <section className="bg-white/10 rounded-2xl p-4 sm:p-6 lg:p-8">
+            <h2 className="font-display text-xl sm:text-2xl lg:text-3xl text-pareto-pink mb-4 sm:mb-6">
               Account
             </h2>
             
-            <div className="space-y-4 mb-6">
+            <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
               <div>
-                <label className="chalk-text text-pareto-light/60 text-sm block mb-2">
+                <label className="chalk-text text-pareto-light/60 text-xs sm:text-sm block mb-2">
                   Email
                 </label>
-                <div className="px-4 py-3 bg-white/5 rounded-lg chalk-text text-pareto-light">
+                <div className="px-3 sm:px-4 py-2 sm:py-3 bg-white/5 rounded-lg chalk-text text-pareto-light text-sm sm:text-base break-all">
                   {email}
                 </div>
               </div>
 
               <div>
-                <label className="chalk-text text-pareto-light/60 text-sm block mb-2">
+                <label className="chalk-text text-pareto-light/60 text-xs sm:text-sm block mb-2">
                   User ID
                 </label>
-                <div className="px-4 py-3 bg-white/5 rounded-lg chalk-text text-pareto-light text-xs break-all">
+                <div className="px-3 sm:px-4 py-2 sm:py-3 bg-white/5 rounded-lg chalk-text text-pareto-light text-xs break-all overflow-hidden">
                   {userId}
                 </div>
               </div>
@@ -244,7 +241,7 @@ export default function SettingsPage() {
 
             <button
               onClick={handleSignOut}
-              className="w-full bg-pareto-pink/20 border border-pareto-pink text-pareto-pink px-6 py-3 rounded-lg font-display text-lg hover:bg-pareto-pink/30 transition-colors"
+              className="w-full bg-pareto-pink/20 border border-pareto-pink text-pareto-pink px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-display text-base sm:text-lg hover:bg-pareto-pink/30 transition-colors"
             >
               Sign Out
             </button>
@@ -252,32 +249,32 @@ export default function SettingsPage() {
 
           {/* Current Group */}
           {groupId ? (
-            <section className="bg-white/10 rounded-2xl p-6 sm:p-8">
-              <h2 className="font-display text-2xl sm:text-3xl text-pareto-yellow mb-6">
+            <section className="bg-white/10 rounded-2xl p-4 sm:p-6 lg:p-8">
+              <h2 className="font-display text-xl sm:text-2xl lg:text-3xl text-pareto-yellow mb-4 sm:mb-6">
                 Your Group
               </h2>
               
-              <div className="space-y-4 mb-6">
+              <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
                 <div>
-                  <label className="chalk-text text-pareto-light/60 text-sm block mb-2">
+                  <label className="chalk-text text-pareto-light/60 text-xs sm:text-sm block mb-2">
                     Group Name
                   </label>
-                  <div className="px-4 py-3 bg-white/5 rounded-lg chalk-text text-pareto-light">
+                  <div className="px-3 sm:px-4 py-2 sm:py-3 bg-white/5 rounded-lg chalk-text text-pareto-light text-sm sm:text-base break-words">
                     {groupName}
                   </div>
                 </div>
 
                 <div>
-                  <label className="chalk-text text-pareto-light/60 text-sm block mb-2">
+                  <label className="chalk-text text-pareto-light/60 text-xs sm:text-sm block mb-2">
                     Group Code
                   </label>
                   <div className="flex gap-2">
-                    <div className="flex-1 px-4 py-3 bg-white/5 rounded-lg chalk-text text-pareto-light font-bold text-2xl">
+                    <div className="flex-1 min-w-0 px-3 sm:px-4 py-2 sm:py-3 bg-white/5 rounded-lg chalk-text text-pareto-light font-bold text-xl sm:text-2xl overflow-hidden">
                       {groupCode}
                     </div>
                     <button
                       onClick={copyGroupCode}
-                      className="px-4 bg-pareto-yellow text-pareto-dark font-display rounded-lg hover:opacity-80 transition-opacity"
+                      className="px-3 sm:px-4 bg-pareto-yellow text-pareto-dark font-display rounded-lg hover:opacity-80 transition-opacity text-sm sm:text-base whitespace-nowrap"
                     >
                       Copy
                     </button>
@@ -288,8 +285,8 @@ export default function SettingsPage() {
                 </div>
 
                 {isAdmin && (
-                  <div className="px-4 py-3 bg-pareto-yellow/20 border border-pareto-yellow rounded-lg">
-                    <p className="chalk-text text-pareto-yellow text-sm">
+                  <div className="px-3 sm:px-4 py-2 sm:py-3 bg-pareto-yellow/20 border border-pareto-yellow rounded-lg">
+                    <p className="chalk-text text-pareto-yellow text-xs sm:text-sm">
                       ✓ You&apos;re the group admin
                     </p>
                   </div>
@@ -298,42 +295,42 @@ export default function SettingsPage() {
 
               <button
                 onClick={handleLeaveGroup}
-                className="w-full bg-pareto-orange/20 border border-pareto-orange text-pareto-orange px-6 py-3 rounded-lg font-display text-lg hover:bg-pareto-orange/30 transition-colors"
+                className="w-full bg-pareto-orange/20 border border-pareto-orange text-pareto-orange px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-display text-base sm:text-lg hover:bg-pareto-orange/30 transition-colors"
               >
                 Leave Group
               </button>
             </section>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Create Group Card */}
-              <section className="bg-white/10 rounded-2xl p-6 sm:p-8">
-                <h2 className="font-display text-2xl sm:text-3xl text-pareto-green mb-4">
+              <section className="bg-white/10 rounded-2xl p-4 sm:p-6 lg:p-8">
+                <h2 className="font-display text-xl sm:text-2xl lg:text-3xl text-pareto-green mb-3 sm:mb-4">
                   Create a Group
                 </h2>
-                <p className="chalk-text text-pareto-light/80 text-base mb-6">
+                <p className="chalk-text text-pareto-light/80 text-sm sm:text-base mb-4 sm:mb-6">
                   Start a new gift exchange and get a code to share with others
                 </p>
                 
                 <button
                   onClick={() => router.push('/create-group')}
-                  className="w-full bg-pareto-green text-pareto-light px-6 py-3 rounded-lg font-display text-lg hover:opacity-80 transition-opacity"
+                  className="w-full bg-pareto-green text-pareto-light px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-display text-base sm:text-lg hover:opacity-80 transition-opacity"
                 >
                   Create New Group
                 </button>
               </section>
 
               {/* Join Group Card */}
-              <section className="bg-white/10 rounded-2xl p-6 sm:p-8">
-                <h2 className="font-display text-2xl sm:text-3xl text-pareto-blue mb-4">
+              <section className="bg-white/10 rounded-2xl p-4 sm:p-6 lg:p-8">
+                <h2 className="font-display text-xl sm:text-2xl lg:text-3xl text-pareto-blue mb-3 sm:mb-4">
                   Join a Group
                 </h2>
-                <p className="chalk-text text-pareto-light/80 text-base mb-6">
+                <p className="chalk-text text-pareto-light/80 text-sm sm:text-base mb-4 sm:mb-6">
                   Have a code from a friend? Enter it to join their group
                 </p>
                 
                 <button
                   onClick={() => router.push('/join-group')}
-                  className="w-full bg-pareto-blue text-pareto-light px-6 py-3 rounded-lg font-display text-lg hover:opacity-80 transition-opacity"
+                  className="w-full bg-pareto-blue text-pareto-light px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-display text-base sm:text-lg hover:opacity-80 transition-opacity"
                 >
                   Join Existing Group
                 </button>
@@ -343,26 +340,26 @@ export default function SettingsPage() {
         </div>
 
         {/* Info Section */}
-        <section className="mt-8 max-w-6xl bg-white/5 rounded-2xl p-6 sm:p-8">
-          <h3 className="font-display text-xl text-pareto-orange mb-4">
+        <section className="mt-6 sm:mt-8 max-w-6xl bg-white/5 rounded-2xl p-4 sm:p-6 lg:p-8">
+          <h3 className="font-display text-lg sm:text-xl text-pareto-orange mb-3 sm:mb-4">
             How It Works
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
             <div>
-              <div className="font-display text-3xl text-pareto-pink mb-2">1</div>
-              <p className="chalk-text text-pareto-light text-sm">
+              <div className="font-display text-2xl sm:text-3xl text-pareto-pink mb-2">1</div>
+              <p className="chalk-text text-pareto-light text-xs sm:text-sm">
                 <strong>Create or join a group</strong> using the group code
               </p>
             </div>
             <div>
-              <div className="font-display text-3xl text-pareto-yellow mb-2">2</div>
-              <p className="chalk-text text-pareto-light text-sm">
+              <div className="font-display text-2xl sm:text-3xl text-pareto-yellow mb-2">2</div>
+              <p className="chalk-text text-pareto-light text-xs sm:text-sm">
                 <strong>Fill out your preferences</strong> on the Dashboard
               </p>
             </div>
             <div>
-              <div className="font-display text-3xl text-pareto-green mb-2">3</div>
-              <p className="chalk-text text-pareto-light text-sm">
+              <div className="font-display text-2xl sm:text-3xl text-pareto-green mb-2">3</div>
+              <p className="chalk-text text-pareto-light text-xs sm:text-sm">
                 <strong>Admin runs the algorithm</strong> and everyone gets matched!
               </p>
             </div>
