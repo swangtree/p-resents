@@ -1,0 +1,8 @@
+fastapi[standard]
+uvicorn[standard]
+pydantic>=2.0
+numpy
+scipy
+python-dateutil
+pytest
+httpx

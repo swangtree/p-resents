@@ -1,0 +1,2 @@
+For deploying to staging for testing:
+fly deploy --app p-resents-api-staging
