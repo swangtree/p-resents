@@ -38,6 +38,13 @@ export default function Home() {
                   onClick={() => router.push('/login')}
                 />
                 <HanddrawnButton
+                  text="View Demo"
+                  fillColor="#f9df57"
+                  borderColor="#15131c"
+                  textColor="#15131c"
+                  onClick={() => router.push('/demo')}
+                />
+                <HanddrawnButton
                   text="Learn More"
                   fillColor="#ff7eba"
                   borderColor="#f6f1ee"
