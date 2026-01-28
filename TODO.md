@@ -30,10 +30,14 @@
 
 ## Priority 3: Polish & UX Improvements
 
-- [ ] **Add loading states and better error handling UX**
+- [x] **Add loading states and better error handling UX**
   - Add loading spinners during API calls (algorithm calculation, form submission)
   - Display user-friendly error messages for edge cases
   - Handle empty groups, missing preferences, and algorithm failures gracefully
+  - *Completed: Added `LoadingSpinner` component and `Toast` notification system*
+  - *Components: `LoadingSpinner.tsx`, `Toast.tsx`, `Providers.tsx`*
+  - *Updated pages: results, dashboard, settings, create-group, join-group*
+  - *Replaced all `alert()` calls with toast notifications for better UX*
 
 - [ ] **Add email notifications when matches are finalized**
   - Send email to group members when admin finalizes results
@@ -98,7 +102,8 @@
 ## Quick Wins (Optional)
 
 - [ ] Add favicon and OpenGraph meta tags for better SEO/sharing
-- [ ] Add "Copy to clipboard" button for group codes
+- [x] Add "Copy to clipboard" button for group codes
+  - *Completed: Added copy button in settings page with toast confirmation*
 - [ ] Mobile responsiveness polish on dashboard and results pages
 - [ ] Dark mode support
 - [ ] Social sharing buttons for group invites
