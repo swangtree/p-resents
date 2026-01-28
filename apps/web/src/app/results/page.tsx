@@ -14,7 +14,9 @@ import { MatchResults } from '@/types/database.types';
 
 export default function ResultsPage() {
   const [groupId, setGroupId] = useState<string | null>(null);
+  const [groupName, setGroupName] = useState<string>('');
   const [userId, setUserId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [statistics, setStatistics] = useState<RecalculateResponse | null>(null);
   const [results, setResults] = useState<FinalizeResponse | null>(null);
@@ -33,13 +35,14 @@ export default function ResultsPage() {
     try {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) {
         router.push('/login');
         return;
       }
 
       setUserId(user.id);
+      setUserEmail(user.email || null);
 
       const { data: profile } = await supabase
         .from('profile')
@@ -49,15 +52,16 @@ export default function ResultsPage() {
 
       if (profile?.group_id) {
         setGroupId(profile.group_id);
-        
-        // Check if user is admin
+
+        // Check if user is admin and get group info
         const { data: group } = await supabase
           .from('groups')
-          .select('created_by')
+          .select('created_by, name')
           .eq('id', profile.group_id)
           .single();
-        
+
         setIsAdmin(group?.created_by === user.id);
+        setGroupName(group?.name || 'Gift Exchange');
 
         // Load existing results
         const existingResults = await SupabaseService.getMatchResults(profile.group_id);
@@ -175,6 +179,38 @@ export default function ResultsPage() {
         created_by: userId,
       });
       showToast('Matching finalized successfully! Group members can now view their results.', 'success');
+
+      // Send email notifications (non-blocking)
+      try {
+        const members = await SupabaseService.getGroupMembersWithEmails(groupId);
+        const recipients = members
+          .filter(m => m.email) // Only include members with emails
+          .map(m => ({
+            user_id: m.user_id,
+            email: m.email!,
+            name: m.name || undefined,
+          }));
+
+        if (recipients.length > 0) {
+          const notificationResult = await ApiService.sendNotifications({
+            group_id: groupId,
+            group_name: groupName,
+            ruleset: selectedRuleset,
+            recipients,
+            pairings: result.pairings || undefined,
+            play_order: result.play_order || undefined,
+          });
+
+          if (notificationResult.total_sent > 0) {
+            showToast(`Email notifications sent to ${notificationResult.total_sent} member(s)!`, 'success');
+          } else if (notificationResult.message) {
+            console.log('Notification result:', notificationResult.message);
+          }
+        }
+      } catch (notificationError) {
+        // Non-blocking - just log the error
+        console.error('Failed to send notifications:', notificationError);
+      }
     } catch (error) {
       console.error('Error finalizing:', error);
       showToast('Failed to finalize matching. Please try again.', 'error');

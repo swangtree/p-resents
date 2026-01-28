@@ -6,3 +6,4 @@ scipy
 python-dateutil
 pytest
 httpx
+resend>=2.0.0
