@@ -90,11 +90,14 @@
   - Error responses for malformed requests, empty groups, insufficient members
   - *Completed: Existing tests in `test_endpoints.py` cover these cases (9 tests)*
 
-- [ ] **Add frontend component tests**
+- [x] **Add frontend component tests**
   - Preference form validation and submission
   - Results page rendering for admin vs regular user
   - Group join/create flows
   - Authentication state handling
+  - *Completed: Added 84 tests across 4 test files using Vitest + Testing Library*
+  - *Files: `components.test.tsx` (Toast, LoadingSpinner), `dashboard.test.tsx`, `results.test.tsx`, `group-flows.test.tsx`*
+  - *Coverage: Component rendering, user interactions, auth state handling, form validation, API mocking*
 
 ## Priority 6: Feature Enhancements
 
