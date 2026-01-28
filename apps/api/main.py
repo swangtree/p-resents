@@ -6,7 +6,7 @@ Supports multiple rulesets: Secret Santa (Random, Max Utility, Max Fairness) and
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from controllers import recalculate, finalize
+from controllers import recalculate, finalize, notifications
 
 # Create FastAPI app
 app = FastAPI(
@@ -29,6 +29,7 @@ app.add_middleware(
 # Register routers
 app.include_router(recalculate.router, tags=["Matching"])
 app.include_router(finalize.router, tags=["Matching"])
+app.include_router(notifications.router, tags=["Notifications"])
 
 
 @app.get("/", tags=["Health"])
@@ -41,7 +42,8 @@ async def root():
         "endpoints": {
             "docs": "/docs",
             "recalculate": "POST /recalculate",
-            "finalize": "POST /finalize_group"
+            "finalize": "POST /finalize_group",
+            "notifications": "POST /send_notifications"
         }
     }
 

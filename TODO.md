@@ -39,10 +39,20 @@
   - *Updated pages: results, dashboard, settings, create-group, join-group*
   - *Replaced all `alert()` calls with toast notifications for better UX*
 
-- [ ] **Add email notifications when matches are finalized**
+- [x] **Add email notifications when matches are finalized**
   - Send email to group members when admin finalizes results
   - Include direct link to view their personal match
   - Use Supabase email or integrate Resend/SendGrid
+  - *Completed: Integrated Resend email service with styled HTML templates*
+  - *Backend: `services/email_service.py`, `controllers/notifications.py`*
+  - *Frontend: Automatically triggers notifications after finalization*
+  - *Note: Gracefully degrades if email service is not configured*
+  - *Required configuration (add to deployment environment):*
+    ```
+    RESEND_API_KEY=re_xxxxxxxxxxxxx      # Get from https://resend.com
+    EMAIL_FROM=P-resents <noreply@your-domain.com>  # Verified sender
+    APP_URL=https://your-app-url.com     # For email links
+    ```
 
 ## Priority 4: Documentation
 
