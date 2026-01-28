@@ -46,8 +46,13 @@
   - *Completed: Integrated Resend email service with styled HTML templates*
   - *Backend: `services/email_service.py`, `controllers/notifications.py`*
   - *Frontend: Automatically triggers notifications after finalization*
-  - *Configuration: Set `RESEND_API_KEY`, `EMAIL_FROM`, and `APP_URL` environment variables*
   - *Note: Gracefully degrades if email service is not configured*
+  - *Required configuration (add to deployment environment):*
+    ```
+    RESEND_API_KEY=re_xxxxxxxxxxxxx      # Get from https://resend.com
+    EMAIL_FROM=P-resents <noreply@your-domain.com>  # Verified sender
+    APP_URL=https://your-app-url.com     # For email links
+    ```
 
 ## Priority 4: Documentation
 
