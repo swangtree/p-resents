@@ -7,10 +7,11 @@ import RainbowText from "./RainbowText";
 
 const NAV_ITEMS = [
   { name: "Home", href: "/", color: "text-pareto-pink" },
-  { name: "Dashboard", href: "/dashboard", color: "text-pareto-yellow" },
-  { name: "Results", href: "/results", color: "text-pareto-orange" },
-  { name: "About", href: "/about", color: "text-pareto-green" },
-  { name: "Settings", href: "/settings", color: "text-pareto-blue" },
+  { name: "Demo", href: "/demo", color: "text-pareto-yellow" },
+  { name: "Dashboard", href: "/dashboard", color: "text-pareto-orange" },
+  { name: "Results", href: "/results", color: "text-pareto-green" },
+  { name: "About", href: "/about", color: "text-pareto-blue" },
+  { name: "Settings", href: "/settings", color: "text-pareto-light" },
 ];
 
 export default function Sidebar() {

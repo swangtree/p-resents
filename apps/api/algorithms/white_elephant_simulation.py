@@ -159,9 +159,9 @@ def _open_new_gift(user_id: str, gift_status: Dict, assignments: Dict,
     """
     available_gifts = [
         gift for gift, status in gift_status.items()
-        if status["opened"] == 0 
-        and status["stolen"] <= 3 
-        and _gift_owner != user_id
+        if status["opened"] == 0
+        and status["stolen"] <= 3
+        and _gift_owner(gift) != user_id
     ]
 
     if not available_gifts:
@@ -190,9 +190,9 @@ def _choose_best_steal_target(user_id: str, prefs_by_id: Dict, gift_status: Dict
 
     available_gifts = [
         gift for gift, status in gift_status.items()
-        if status["opened"] == 0 
-        and status["stolen"] <= 3 
-        and _gift_owner != user_id
+        if status["opened"] == 1
+        and status["stolen"] <= 3
+        and _gift_owner(gift) != user_id
         and not (last_steal["gift"] == gift and last_steal["victim"] == user_id)
     ]
 
