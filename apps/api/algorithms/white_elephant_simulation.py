@@ -296,13 +296,13 @@ def _simulate_single_game(preferences: List[UserPreference]) -> Dict:
             if best_gift is None or best_score <= 5:
                 _open_new_gift(current, gift_status, assignments, member_stats, prefs_by_id)
             else:
-                victim = _steal_gift(
+                victim, stolen_gift = _steal_gift(
                     current, best_gift, assignments, member_stats, gift_status, prefs_by_id
                 )
-                
-                last_steal["gift"] = best_gift
-                last_steal["victim"] = victim 
-                
+
+                last_steal["gift"] = stolen_gift
+                last_steal["victim"] = victim
+
                 steals += 1
                 play_queue.insert(0, victim)
 

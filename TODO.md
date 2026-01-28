@@ -23,6 +23,11 @@
   - *Completed: Fixed bug in both `_open_new_gift` (line 164) and `_choose_best_steal_target` (line 195)*
   - *Additional fix: Changed `status["opened"] == 0` to `status["opened"] == 1` in steal target selection (can only steal opened gifts)*
 
+- [x] **Fix White Elephant bug in `_simulate_single_game` steal return handling**
+  - Location: `apps/api/algorithms/white_elephant_simulation.py:299-307`
+  - `_steal_gift` returns tuple `(victim, gift)` but was incorrectly captured as single value
+  - *Completed: Fixed tuple unpacking in game simulation loop*
+
 ## Priority 3: Polish & UX Improvements
 
 - [ ] **Add loading states and better error handling UX**
@@ -46,21 +51,26 @@
 
 ## Priority 5: Testing
 
-- [ ] **Add unit tests for matching algorithms**
+- [x] **Add unit tests for matching algorithms**
   - Random matching: valid derangements, exclusion handling, edge cases (2-3 people)
   - Max utility: optimal pairing verification, exclusion constraints respected
   - Max fairness: variance minimization, compare exhaustive vs greedy results
   - White Elephant: simulation consistency, stealing logic, play order validity
+  - *Completed: Added 106 new unit tests across 5 test files covering all 4 algorithms*
+  - *Files: `test_utility_calculator.py`, `test_random_matching.py`, `test_max_utility_matching.py`, `test_max_fairness_matching.py`, `test_white_elephant.py`*
+  - *Note: Tests discovered and led to fix of `_steal_gift` return value bug*
 
-- [ ] **Add unit tests for utility calculator**
+- [x] **Add unit tests for utility calculator**
   - Preference alignment scoring (practicality, novelty, sentimentality)
   - Shared interests bonus calculation
   - Edge cases: no shared interests, identical preferences, extreme values
+  - *Completed: 17 tests covering utility calculation, shared interests, and edge cases*
 
-- [ ] **Add API integration tests**
+- [x] **Add API integration tests**
   - `/recalculate` endpoint with valid/invalid payloads
   - `/finalize_group` endpoint for all 4 rulesets
   - Error responses for malformed requests, empty groups, insufficient members
+  - *Completed: Existing tests in `test_endpoints.py` cover these cases (9 tests)*
 
 - [ ] **Add frontend component tests**
   - Preference form validation and submission
