@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Open_Sans } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
+import Providers from "@/components/Providers";
 
 const openSans = Open_Sans({
   variable: "--font-open-sans",
@@ -41,7 +42,7 @@ export default function RootLayout({
       <body
         className={`${openSans.variable} ${mrsPickles.variable} antialiased`}
       >
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

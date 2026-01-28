@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import RainbowText from '@/components/RainbowText';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import { useToast } from '@/components/Toast';
 import { createClient } from '@/lib/supabase';
 
 export default function SettingsPage() {
@@ -17,6 +19,7 @@ export default function SettingsPage() {
   const [joinCode, setJoinCode] = useState('');
   const [newGroupName, setNewGroupName] = useState('');
   const router = useRouter();
+  const { showToast } = useToast();
 
   useEffect(() => {
     loadUserSettings();
@@ -65,12 +68,12 @@ export default function SettingsPage() {
 
   const handleCreateGroup = async () => {
     if (!newGroupName.trim()) {
-      alert('Please enter a group name');
+      showToast('Please enter a group name', 'warning');
       return;
     }
 
     if (!userId) {
-      alert('User not logged in');
+      showToast('User not logged in', 'error');
       return;
     }
 
@@ -95,23 +98,23 @@ export default function SettingsPage() {
         .update({ group_id: newGroup.id })
         .eq('id', userId);
 
-      alert(`Group created! Share code: ${generatedCode}`);
+      showToast(`Group created! Share code: ${generatedCode}`, 'success');
       await loadUserSettings();
       setNewGroupName('');
     } catch (error) {
       console.error('Error creating group:', error);
-      alert('Failed to create group');
+      showToast('Failed to create group', 'error');
     }
   };
 
   const handleJoinGroup = async () => {
     if (!joinCode.trim()) {
-      alert('Please enter a group code');
+      showToast('Please enter a group code', 'warning');
       return;
     }
 
     if (!userId) {
-      alert('User not logged in');
+      showToast('User not logged in', 'error');
       return;
     }
 
@@ -125,7 +128,7 @@ export default function SettingsPage() {
         .single();
 
       if (groupError || !group) {
-        alert('Invalid group code');
+        showToast('Invalid group code', 'error');
         return;
       }
 
@@ -134,18 +137,18 @@ export default function SettingsPage() {
         .update({ group_id: group.id })
         .eq('id', userId);
 
-      alert('Successfully joined group!');
+      showToast('Successfully joined group!', 'success');
       await loadUserSettings();
       setJoinCode('');
     } catch (error) {
       console.error('Error joining group:', error);
-      alert('Failed to join group');
+      showToast('Failed to join group', 'error');
     }
   };
 
   const handleLeaveGroup = async () => {
     if (!userId || !groupId) {
-      alert('Missing user or group information');
+      showToast('Missing user or group information', 'error');
       return;
     }
 
@@ -171,11 +174,11 @@ export default function SettingsPage() {
         .update({ group_id: null })
         .eq('id', userId);
 
-      alert('Left group successfully');
+      showToast('Left group successfully', 'success');
       await loadUserSettings();
     } catch (error) {
       console.error('Error leaving group:', error);
-      alert('Failed to leave group');
+      showToast('Failed to leave group', 'error');
     }
   };
 
@@ -187,15 +190,15 @@ export default function SettingsPage() {
 
   const copyGroupCode = () => {
     navigator.clipboard.writeText(groupCode);
-    alert('Group code copied to clipboard!');
+    showToast('Group code copied to clipboard!', 'success');
   };
 
   if (loading) {
     return (
       <div className="flex bg-pareto-dark min-h-screen items-center justify-center">
         <Sidebar />
-        <main className="ml-[200px] w-full">
-          <p className="chalk-text text-pareto-light text-xl">Loading...</p>
+        <main className="ml-[200px] w-full flex items-center justify-center">
+          <LoadingSpinner size="lg" text="Loading settings..." />
         </main>
       </div>
     );
