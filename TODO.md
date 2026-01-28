@@ -46,11 +46,27 @@
 
 ## Priority 5: Testing
 
-- [ ] **Add unit/integration tests for algorithms and API**
-  - Test all 4 matching algorithms with edge cases (exclusions, small groups)
-  - API endpoint tests with valid/invalid inputs
-  - Utility calculator tests for preference scoring
-  - Frontend component tests for critical user flows
+- [ ] **Add unit tests for matching algorithms**
+  - Random matching: valid derangements, exclusion handling, edge cases (2-3 people)
+  - Max utility: optimal pairing verification, exclusion constraints respected
+  - Max fairness: variance minimization, compare exhaustive vs greedy results
+  - White Elephant: simulation consistency, stealing logic, play order validity
+
+- [ ] **Add unit tests for utility calculator**
+  - Preference alignment scoring (practicality, novelty, sentimentality)
+  - Shared interests bonus calculation
+  - Edge cases: no shared interests, identical preferences, extreme values
+
+- [ ] **Add API integration tests**
+  - `/recalculate` endpoint with valid/invalid payloads
+  - `/finalize_group` endpoint for all 4 rulesets
+  - Error responses for malformed requests, empty groups, insufficient members
+
+- [ ] **Add frontend component tests**
+  - Preference form validation and submission
+  - Results page rendering for admin vs regular user
+  - Group join/create flows
+  - Authentication state handling
 
 ## Priority 6: Feature Enhancements
 
