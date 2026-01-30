@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Open_Sans } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
+import Providers from "@/components/Providers";
 
 const openSans = Open_Sans({
   variable: "--font-open-sans",
@@ -27,8 +28,50 @@ const mrsPickles = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Pareto Presents",
-  description: "Helping you and your friends gift give (more optimally)",
+  title: {
+    default: "Pareto Presents - Smart Gift Exchange Matching",
+    template: "%s | Pareto Presents",
+  },
+  description:
+    "Algorithmic gift exchange matching for Secret Santa and White Elephant. Use smart algorithms to match givers with receivers based on preferences, interests, and compatibility.",
+  keywords: [
+    "gift exchange",
+    "secret santa",
+    "white elephant",
+    "gift matching",
+    "algorithm",
+    "pareto",
+    "holiday",
+    "gift giving",
+    "matching algorithm",
+    "hungarian algorithm",
+  ],
+  authors: [{ name: "Pareto Presents" }],
+  creator: "Pareto Presents",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL || "https://p-resents.vercel.app"
+  ),
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    siteName: "Pareto Presents",
+    title: "Pareto Presents - Smart Gift Exchange Matching",
+    description:
+      "Algorithmic gift exchange matching for Secret Santa and White Elephant. Use smart algorithms to match givers with receivers based on preferences and interests.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Pareto Presents - Smart Gift Exchange Matching",
+    description:
+      "Algorithmic gift exchange matching for Secret Santa and White Elephant.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
@@ -41,7 +84,7 @@ export default function RootLayout({
       <body
         className={`${openSans.variable} ${mrsPickles.variable} antialiased`}
       >
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

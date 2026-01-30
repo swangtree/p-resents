@@ -53,3 +53,34 @@ export interface UserPreferences {
     pairings?: Pairing[];
     play_order?: string[];
   }
+
+  // Email Notification Types
+  export interface NotificationRecipient {
+    user_id: string;
+    email: string;
+    name?: string;
+  }
+
+  export interface SendNotificationsRequest {
+    group_id: string;
+    group_name: string;
+    ruleset: string;
+    recipients: NotificationRecipient[];
+    pairings?: Pairing[];
+    play_order?: string[];
+  }
+
+  export interface NotificationResult {
+    email: string;
+    success: boolean;
+    error?: string;
+  }
+
+  export interface SendNotificationsResponse {
+    group_id: string;
+    total_sent: number;
+    total_failed: number;
+    success: NotificationResult[];
+    failed: NotificationResult[];
+    message: string;
+  }

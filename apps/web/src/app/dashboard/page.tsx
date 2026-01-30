@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import RainbowText from '@/components/RainbowText';
 import HanddrawnButton from '@/components/HanddrawnButton';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import { useToast } from '@/components/Toast';
 import { createClient } from '@/lib/supabase';
 import { SupabaseService } from '@/services/supabase.service';
 import { GroupMember } from '@/types/database.types';
@@ -31,6 +33,7 @@ export default function DashboardPage() {
   const [saving, setSaving] = useState(false);
   const [groupMembers, setGroupMembers] = useState<GroupMember[]>([]);
   const router = useRouter();
+  const { showToast } = useToast();
 
   useEffect(() => {
     loadUserData();
@@ -102,10 +105,10 @@ export default function DashboardPage() {
 
   const handleSave = async () => {
     if (!groupId || !userId) {
-      alert('Missing group or user information');
+      showToast('Missing group or user information', 'error');
       return;
     }
-    
+
     setSaving(true);
     try {
       await SupabaseService.savePreferences({
@@ -113,16 +116,16 @@ export default function DashboardPage() {
         group_id: groupId,
         ...preferences,
       });
-      
-      alert('Preferences saved successfully!');
+
+      showToast('Preferences saved successfully!', 'success');
     } catch (error: unknown) {
       console.error('Error saving preferences:', error);
       console.error('Error details:', JSON.stringify(error, null, 2));
       if (error instanceof Error) {
-      const errorMessage = error?.message || 'Unknown error';
-      alert(`Failed to save preferences: ${errorMessage}`);
+        const errorMessage = error?.message || 'Unknown error';
+        showToast(`Failed to save preferences: ${errorMessage}`, 'error');
       } else {
-        alert('Failed to save preferences: Unknown error');
+        showToast('Failed to save preferences. Please try again.', 'error');
       }
     } finally {
       setSaving(false);
@@ -164,8 +167,8 @@ export default function DashboardPage() {
     return (
       <div className="flex bg-pareto-dark min-h-screen items-center justify-center">
         <Sidebar />
-        <main className="ml-[200px] w-full">
-          <p className="chalk-text text-pareto-light text-xl">Loading...</p>
+        <main className="ml-[200px] w-full flex items-center justify-center">
+          <LoadingSpinner size="lg" text="Loading your preferences..." />
         </main>
       </div>
     );
@@ -602,9 +605,16 @@ export default function DashboardPage() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="w-full bg-pareto-green text-pareto-light px-8 py-4 rounded-xl font-display text-2xl hover:opacity-80 disabled:opacity-50 transition-opacity"
+              className="w-full bg-pareto-green text-pareto-light px-8 py-4 rounded-xl font-display text-2xl hover:opacity-80 disabled:opacity-50 transition-opacity flex items-center justify-center gap-3"
             >
-              {saving ? 'Saving...' : 'Save Preferences'}
+              {saving ? (
+                <>
+                  <LoadingSpinner size="sm" color="border-pareto-light" />
+                  <span>Saving...</span>
+                </>
+              ) : (
+                'Save Preferences'
+              )}
             </button>
           </div>
 

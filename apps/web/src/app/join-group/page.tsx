@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import RainbowText from '@/components/RainbowText';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import { useToast } from '@/components/Toast';
 import { createClient } from '@/lib/supabase';
 import { GroupPreview } from '@/types/database.types';
 
@@ -13,6 +15,7 @@ export default function JoinGroupPage() {
   const [error, setError] = useState('');
   const [groupPreview, setGroupPreview] = useState<GroupPreview | null>(null);
   const router = useRouter();
+  const { showToast } = useToast();
 
   const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -112,7 +115,7 @@ export default function JoinGroupPage() {
       if (profileError) throw profileError;
 
       // Success!
-      alert(`Successfully joined "${groupPreview.name}"!`);
+      showToast(`Successfully joined "${groupPreview.name}"!`, 'success');
       router.push('/dashboard');
     } catch (err: unknown) {
       console.error('Error joining group:', err);
@@ -159,9 +162,16 @@ export default function JoinGroupPage() {
                   <button
                     onClick={handlePreviewGroup}
                     disabled={loading || groupCode.length !== 6}
-                    className="px-6 py-4 bg-pareto-blue text-pareto-light font-display text-lg rounded-xl hover:opacity-80 disabled:opacity-50 transition-opacity whitespace-nowrap"
+                    className="px-6 py-4 bg-pareto-blue text-pareto-light font-display text-lg rounded-xl hover:opacity-80 disabled:opacity-50 transition-opacity whitespace-nowrap flex items-center justify-center gap-2"
                   >
-                    {loading ? 'Checking...' : 'Find Group'}
+                    {loading && !groupPreview ? (
+                      <>
+                        <LoadingSpinner size="sm" color="border-pareto-light" />
+                        <span>Checking...</span>
+                      </>
+                    ) : (
+                      'Find Group'
+                    )}
                   </button>
                 </div>
                 <p className="chalk-text text-pareto-light/60 text-sm mt-2">
@@ -214,9 +224,16 @@ export default function JoinGroupPage() {
                   <button
                     onClick={handleJoinGroup}
                     disabled={loading}
-                    className="w-full bg-pareto-green text-pareto-light px-8 py-4 rounded-xl font-display text-2xl hover:opacity-80 disabled:opacity-50 transition-opacity mt-4"
+                    className="w-full bg-pareto-green text-pareto-light px-8 py-4 rounded-xl font-display text-2xl hover:opacity-80 disabled:opacity-50 transition-opacity mt-4 flex items-center justify-center gap-3"
                   >
-                    {loading ? 'Joining...' : 'Join This Group'}
+                    {loading ? (
+                      <>
+                        <LoadingSpinner size="sm" color="border-pareto-light" />
+                        <span>Joining...</span>
+                      </>
+                    ) : (
+                      'Join This Group'
+                    )}
                   </button>
                 </div>
               )}

@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import RainbowText from '@/components/RainbowText';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import { useToast } from '@/components/Toast';
 import { ApiService } from '@/services/api.service';
 import { SupabaseService } from '@/services/supabase.service';
 import { createClient } from '@/lib/supabase';
@@ -12,7 +14,9 @@ import { MatchResults } from '@/types/database.types';
 
 export default function ResultsPage() {
   const [groupId, setGroupId] = useState<string | null>(null);
+  const [groupName, setGroupName] = useState<string>('');
   const [userId, setUserId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [statistics, setStatistics] = useState<RecalculateResponse | null>(null);
   const [results, setResults] = useState<FinalizeResponse | null>(null);
@@ -21,6 +25,7 @@ export default function ResultsPage() {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const router = useRouter();
+  const { showToast } = useToast();
 
   useEffect(() => {
     loadUserData();
@@ -30,13 +35,14 @@ export default function ResultsPage() {
     try {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) {
         router.push('/login');
         return;
       }
 
       setUserId(user.id);
+      setUserEmail(user.email || null);
 
       const { data: profile } = await supabase
         .from('profile')
@@ -46,15 +52,16 @@ export default function ResultsPage() {
 
       if (profile?.group_id) {
         setGroupId(profile.group_id);
-        
-        // Check if user is admin
+
+        // Check if user is admin and get group info
         const { data: group } = await supabase
           .from('groups')
-          .select('created_by')
+          .select('created_by, name')
           .eq('id', profile.group_id)
           .single();
-        
+
         setIsAdmin(group?.created_by === user.id);
+        setGroupName(group?.name || 'Gift Exchange');
 
         // Load existing results
         const existingResults = await SupabaseService.getMatchResults(profile.group_id);
@@ -77,7 +84,7 @@ export default function ResultsPage() {
       const prefs = await SupabaseService.getGroupPreferences(groupId);
       
       if (prefs.length === 0) {
-        alert('No preferences found. Please make sure group members have filled out their preferences.');
+        showToast('No preferences found. Please make sure group members have filled out their preferences.', 'warning');
         return;
       }
 
@@ -105,7 +112,7 @@ export default function ResultsPage() {
       setStatistics(stats);
     } catch (error) {
       console.error('Error calculating statistics:', error);
-      alert('Failed to calculate statistics. Make sure the API is running at ' + (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'));
+      showToast('Failed to calculate statistics. Make sure the API is running.', 'error');
     } finally {
       setLoading(false);
     }
@@ -113,7 +120,7 @@ export default function ResultsPage() {
 
   const handleFinalize = async () => {
     if (!selectedRuleset || !groupId || !userId) {
-      alert('Please select a ruleset');
+      showToast('Please select a ruleset', 'warning');
       return;
     }
 
@@ -171,9 +178,42 @@ export default function ResultsPage() {
         created_at: new Date().toISOString(),
         created_by: userId,
       });
+      showToast('Matching finalized successfully! Group members can now view their results.', 'success');
+
+      // Send email notifications (non-blocking)
+      try {
+        const members = await SupabaseService.getGroupMembersWithEmails(groupId);
+        const recipients = members
+          .filter(m => m.email) // Only include members with emails
+          .map(m => ({
+            user_id: m.user_id,
+            email: m.email!,
+            name: m.name || undefined,
+          }));
+
+        if (recipients.length > 0) {
+          const notificationResult = await ApiService.sendNotifications({
+            group_id: groupId,
+            group_name: groupName,
+            ruleset: selectedRuleset,
+            recipients,
+            pairings: result.pairings || undefined,
+            play_order: result.play_order || undefined,
+          });
+
+          if (notificationResult.total_sent > 0) {
+            showToast(`Email notifications sent to ${notificationResult.total_sent} member(s)!`, 'success');
+          } else if (notificationResult.message) {
+            console.log('Notification result:', notificationResult.message);
+          }
+        }
+      } catch (notificationError) {
+        // Non-blocking - just log the error
+        console.error('Failed to send notifications:', notificationError);
+      }
     } catch (error) {
       console.error('Error finalizing:', error);
-      alert('Failed to finalize matching. Please try again.');
+      showToast('Failed to finalize matching. Please try again.', 'error');
     } finally {
       setLoading(false);
     }
@@ -183,8 +223,8 @@ export default function ResultsPage() {
     return (
       <div className="flex bg-pareto-dark min-h-screen items-center justify-center">
         <Sidebar />
-        <main className="ml-[200px] w-full">
-          <p className="chalk-text text-pareto-light text-xl">Loading...</p>
+        <main className="ml-[200px] w-full flex items-center justify-center">
+          <LoadingSpinner size="lg" text="Loading results..." />
         </main>
       </div>
     );
@@ -329,9 +369,16 @@ export default function ResultsPage() {
           <button
             onClick={handleCalculate}
             disabled={loading}
-            className="bg-pareto-orange text-pareto-light px-8 py-4 rounded-xl font-display text-2xl hover:opacity-80 disabled:opacity-50 transition-opacity"
+            className="bg-pareto-orange text-pareto-light px-8 py-4 rounded-xl font-display text-2xl hover:opacity-80 disabled:opacity-50 transition-opacity flex items-center justify-center gap-3"
           >
-            {loading ? 'Calculating...' : 'Calculate Statistics'}
+            {loading ? (
+              <>
+                <LoadingSpinner size="sm" color="border-pareto-light" />
+                <span>Calculating...</span>
+              </>
+            ) : (
+              'Calculate Statistics'
+            )}
           </button>
         )}
 
@@ -407,9 +454,16 @@ export default function ResultsPage() {
             <button
               onClick={handleFinalize}
               disabled={loading || !selectedRuleset}
-              className="w-full max-w-md bg-pareto-green text-pareto-light px-8 py-4 rounded-xl font-display text-2xl hover:opacity-80 disabled:opacity-50 transition-opacity"
+              className="w-full max-w-md bg-pareto-green text-pareto-light px-8 py-4 rounded-xl font-display text-2xl hover:opacity-80 disabled:opacity-50 transition-opacity flex items-center justify-center gap-3"
             >
-              {loading ? 'Finalizing...' : 'Finalize Match'}
+              {loading ? (
+                <>
+                  <LoadingSpinner size="sm" color="border-pareto-light" />
+                  <span>Finalizing...</span>
+                </>
+              ) : (
+                'Finalize Match'
+              )}
             </button>
           </div>
         )}

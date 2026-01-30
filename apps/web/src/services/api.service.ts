@@ -1,4 +1,4 @@
-import { RecalculateRequest, RecalculateResponse, FinalizeRequest, FinalizeResponse, RulesetStatistics } from '@/types/api.types';
+import { RecalculateRequest, RecalculateResponse, FinalizeRequest, FinalizeResponse, RulesetStatistics, SendNotificationsRequest, SendNotificationsResponse } from '@/types/api.types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -99,6 +99,53 @@ export class ApiService {
         console.error('Unknown error type in finalize');
       }
       throw new Error('Failed to finalize match. Make sure the API is running at ' + API_URL);
+    }
+  }
+
+  /**
+   * Send email notifications to group members after finalization
+   * This is a non-blocking call - failures don't affect the matching results
+   */
+  static async sendNotifications(request: SendNotificationsRequest): Promise<SendNotificationsResponse> {
+    try {
+      console.log('Sending notifications:', request);
+
+      const response = await fetch(`${API_URL}/send_notifications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Notification API Error Response:', errorText);
+        // Return a failure response instead of throwing
+        return {
+          group_id: request.group_id,
+          total_sent: 0,
+          total_failed: 0,
+          success: [],
+          failed: [],
+          message: `Failed to send notifications: ${response.status}`,
+        };
+      }
+
+      const data = await response.json();
+      console.log('Notification API Response:', data);
+      return data;
+    } catch (error: unknown) {
+      console.error('Error in sendNotifications:', error);
+      // Return a graceful failure - notifications are non-blocking
+      return {
+        group_id: request.group_id,
+        total_sent: 0,
+        total_failed: 0,
+        success: [],
+        failed: [],
+        message: 'Email notifications unavailable. Group members can view results by logging in.',
+      };
     }
   }
 }

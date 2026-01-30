@@ -23,50 +23,81 @@
   - *Completed: Fixed bug in both `_open_new_gift` (line 164) and `_choose_best_steal_target` (line 195)*
   - *Additional fix: Changed `status["opened"] == 0` to `status["opened"] == 1` in steal target selection (can only steal opened gifts)*
 
+- [x] **Fix White Elephant bug in `_simulate_single_game` steal return handling**
+  - Location: `apps/api/algorithms/white_elephant_simulation.py:299-307`
+  - `_steal_gift` returns tuple `(victim, gift)` but was incorrectly captured as single value
+  - *Completed: Fixed tuple unpacking in game simulation loop*
+
 ## Priority 3: Polish & UX Improvements
 
-- [ ] **Add loading states and better error handling UX**
+- [x] **Add loading states and better error handling UX**
   - Add loading spinners during API calls (algorithm calculation, form submission)
   - Display user-friendly error messages for edge cases
   - Handle empty groups, missing preferences, and algorithm failures gracefully
+  - *Completed: Added `LoadingSpinner` component and `Toast` notification system*
+  - *Components: `LoadingSpinner.tsx`, `Toast.tsx`, `Providers.tsx`*
+  - *Updated pages: results, dashboard, settings, create-group, join-group*
+  - *Replaced all `alert()` calls with toast notifications for better UX*
 
-- [ ] **Add email notifications when matches are finalized**
+- [x] **Add email notifications when matches are finalized**
   - Send email to group members when admin finalizes results
   - Include direct link to view their personal match
   - Use Supabase email or integrate Resend/SendGrid
+  - *Completed: Integrated Resend email service with styled HTML templates*
+  - *Backend: `services/email_service.py`, `controllers/notifications.py`*
+  - *Frontend: Automatically triggers notifications after finalization*
+  - *Note: Gracefully degrades if email service is not configured*
+  - *Required configuration (add to deployment environment):*
+    ```
+    RESEND_API_KEY=re_xxxxxxxxxxxxx      # Get from https://resend.com
+    EMAIL_FROM=P-resents <noreply@your-domain.com>  # Verified sender
+    APP_URL=https://your-app-url.com     # For email links
+    ```
 
 ## Priority 4: Documentation
 
-- [ ] **Add comprehensive README documentation**
+- [x] **Add comprehensive README documentation**
   - Project overview explaining the gift exchange matching concept
   - Tech stack breakdown (Next.js, FastAPI, Supabase, scipy)
   - Local development setup with environment variables
   - Algorithm explanations (Hungarian, Monte Carlo simulation, etc.)
   - Deployment guide for Vercel and Fly.io
+  - *Completed: Rewrote README.md with comprehensive documentation*
+  - *Sections: Features, Tech Stack tables, Project Structure, Getting Started*
+  - *Algorithm docs: Random (derangement), Max Utility (Hungarian), Max Fairness (minimax), White Elephant (Monte Carlo)*
+  - *Includes: Utility calculation formula, API endpoints, database schema, deployment guides for Vercel and Fly.io*
 
 ## Priority 5: Testing
 
-- [ ] **Add unit tests for matching algorithms**
+- [x] **Add unit tests for matching algorithms**
   - Random matching: valid derangements, exclusion handling, edge cases (2-3 people)
   - Max utility: optimal pairing verification, exclusion constraints respected
   - Max fairness: variance minimization, compare exhaustive vs greedy results
   - White Elephant: simulation consistency, stealing logic, play order validity
+  - *Completed: Added 106 new unit tests across 5 test files covering all 4 algorithms*
+  - *Files: `test_utility_calculator.py`, `test_random_matching.py`, `test_max_utility_matching.py`, `test_max_fairness_matching.py`, `test_white_elephant.py`*
+  - *Note: Tests discovered and led to fix of `_steal_gift` return value bug*
 
-- [ ] **Add unit tests for utility calculator**
+- [x] **Add unit tests for utility calculator**
   - Preference alignment scoring (practicality, novelty, sentimentality)
   - Shared interests bonus calculation
   - Edge cases: no shared interests, identical preferences, extreme values
+  - *Completed: 17 tests covering utility calculation, shared interests, and edge cases*
 
-- [ ] **Add API integration tests**
+- [x] **Add API integration tests**
   - `/recalculate` endpoint with valid/invalid payloads
   - `/finalize_group` endpoint for all 4 rulesets
   - Error responses for malformed requests, empty groups, insufficient members
+  - *Completed: Existing tests in `test_endpoints.py` cover these cases (9 tests)*
 
-- [ ] **Add frontend component tests**
+- [x] **Add frontend component tests**
   - Preference form validation and submission
   - Results page rendering for admin vs regular user
   - Group join/create flows
   - Authentication state handling
+  - *Completed: Added 84 tests across 4 test files using Vitest + Testing Library*
+  - *Files: `components.test.tsx` (Toast, LoadingSpinner), `dashboard.test.tsx`, `results.test.tsx`, `group-flows.test.tsx`*
+  - *Coverage: Component rendering, user interactions, auth state handling, form validation, API mocking*
 
 ## Priority 6: Feature Enhancements
 
@@ -92,8 +123,13 @@
 
 ## Quick Wins (Optional)
 
-- [ ] Add favicon and OpenGraph meta tags for better SEO/sharing
-- [ ] Add "Copy to clipboard" button for group codes
+- [x] Add favicon and OpenGraph meta tags for better SEO/sharing
+  - *Completed: Created gift-themed SVG favicon (`apps/web/src/app/icon.svg`)*
+  - *Created dynamic OpenGraph image with Next.js ImageResponse API (`apps/web/src/app/opengraph-image.tsx`)*
+  - *Added comprehensive metadata in layout.tsx: title template, description, keywords, OpenGraph, Twitter cards, robots*
+  - *Metadata includes: site name, locale, card type, SEO keywords*
+- [x] Add "Copy to clipboard" button for group codes
+  - *Completed: Added copy button in settings page with toast confirmation*
 - [ ] Mobile responsiveness polish on dashboard and results pages
 - [ ] Dark mode support
 - [ ] Social sharing buttons for group invites

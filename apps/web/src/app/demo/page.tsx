@@ -7,16 +7,16 @@ import RainbowText from '@/components/RainbowText';
 import HanddrawnButton from '@/components/HanddrawnButton';
 import { RulesetStatistics, Pairing } from '@/types/api.types';
 
-// Demo data for 8 team members with varied preferences
+// Demo data featuring the Pareto Presents team
 const DEMO_MEMBERS = [
-  { id: 'alice', name: 'Alice', interests: ['hiking', 'cooking', 'photography'] },
-  { id: 'bob', name: 'Bob', interests: ['gaming', 'tech gadgets', 'sci-fi'] },
-  { id: 'carol', name: 'Carol', interests: ['reading', 'tea', 'gardening'] },
-  { id: 'david', name: 'David', interests: ['sports', 'grilling', 'craft beer'] },
-  { id: 'emma', name: 'Emma', interests: ['art', 'music', 'yoga'] },
-  { id: 'frank', name: 'Frank', interests: ['woodworking', 'camping', 'coffee'] },
-  { id: 'grace', name: 'Grace', interests: ['baking', 'movies', 'travel'] },
-  { id: 'henry', name: 'Henry', interests: ['puzzles', 'board games', 'astronomy'] },
+  { id: 'samuel', name: 'Samuel', interests: ['Milkis', 'backend APIs', 'project management'] },
+  { id: 'liam', name: 'Liam', interests: ['monkey antiques', 'frontend dev', 'simulations'] },
+  { id: 'justin', name: 'Justin', interests: ['crochet', 'algorithms', 'optimization'] },
+  { id: 'charlotte', name: 'Charlotte', interests: ['pottery', 'art', 'UI design'] },
+  { id: 'cole', name: 'Cole', interests: ['clothes', 'fashion', 'results pages'] },
+  { id: 'stefanie', name: 'Stefanie', interests: ['tech gadgets', 'fairness algorithms', 'dashboards'] },
+  { id: 'joanna', name: 'Joanna', interests: ['concert tickets', 'live music', 'simulations'] },
+  { id: 'sam', name: 'Sam', interests: ['board games', 'video games', 'web design'] },
 ];
 
 // Pre-calculated algorithm statistics (simulating API response)
@@ -58,18 +58,18 @@ const DEMO_STATISTICS: RulesetStatistics[] = [
 
 // Sample Secret Santa pairings with Max Utility algorithm
 const DEMO_PAIRINGS: Pairing[] = [
-  { giver: 'Alice', receiver: 'Henry', utility: 8.5 },
-  { giver: 'Bob', receiver: 'Frank', utility: 7.2 },
-  { giver: 'Carol', receiver: 'Emma', utility: 8.9 },
-  { giver: 'David', receiver: 'Bob', utility: 7.8 },
-  { giver: 'Emma', receiver: 'Carol', utility: 9.2 },
-  { giver: 'Frank', receiver: 'David', utility: 8.1 },
-  { giver: 'Grace', receiver: 'Alice', utility: 7.5 },
-  { giver: 'Henry', receiver: 'Grace', utility: 8.0 },
+  { giver: 'Samuel', receiver: 'Sam', utility: 8.5 },
+  { giver: 'Liam', receiver: 'Joanna', utility: 7.2 },
+  { giver: 'Justin', receiver: 'Stefanie', utility: 8.9 },
+  { giver: 'Charlotte', receiver: 'Liam', utility: 7.8 },
+  { giver: 'Cole', receiver: 'Charlotte', utility: 9.2 },
+  { giver: 'Stefanie', receiver: 'Justin', utility: 8.1 },
+  { giver: 'Joanna', receiver: 'Samuel', utility: 7.5 },
+  { giver: 'Sam', receiver: 'Cole', utility: 8.0 },
 ];
 
 // Sample White Elephant play order
-const DEMO_PLAY_ORDER = ['Grace', 'David', 'Alice', 'Frank', 'Carol', 'Henry', 'Emma', 'Bob'];
+const DEMO_PLAY_ORDER = ['Joanna', 'Cole', 'Samuel', 'Stefanie', 'Charlotte', 'Sam', 'Justin', 'Liam'];
 
 // White Elephant simulation statistics
 const DEMO_WE_STATS = {
@@ -77,14 +77,14 @@ const DEMO_WE_STATS = {
   maxStealsObserved: 12,
   simulationsRun: 1000,
   userStats: [
-    { name: 'Alice', avgUtility: 6.8, timesStolen: '32%', timesStealing: '45%' },
-    { name: 'Bob', avgUtility: 7.1, timesStolen: '28%', timesStealing: '38%' },
-    { name: 'Carol', avgUtility: 6.2, timesStolen: '41%', timesStealing: '22%' },
-    { name: 'David', avgUtility: 7.4, timesStolen: '25%', timesStealing: '52%' },
-    { name: 'Emma', avgUtility: 5.9, timesStolen: '48%', timesStealing: '18%' },
-    { name: 'Frank', avgUtility: 6.5, timesStolen: '35%', timesStealing: '40%' },
-    { name: 'Grace', avgUtility: 7.8, timesStolen: '18%', timesStealing: '55%' },
-    { name: 'Henry', avgUtility: 5.8, timesStolen: '52%', timesStealing: '15%' },
+    { name: 'Samuel', avgUtility: 6.8, timesStolen: '32%', timesStealing: '45%' },
+    { name: 'Liam', avgUtility: 7.1, timesStolen: '28%', timesStealing: '38%' },
+    { name: 'Justin', avgUtility: 6.2, timesStolen: '41%', timesStealing: '22%' },
+    { name: 'Charlotte', avgUtility: 7.4, timesStolen: '25%', timesStealing: '52%' },
+    { name: 'Cole', avgUtility: 5.9, timesStolen: '48%', timesStealing: '18%' },
+    { name: 'Stefanie', avgUtility: 6.5, timesStolen: '35%', timesStealing: '40%' },
+    { name: 'Joanna', avgUtility: 7.8, timesStolen: '18%', timesStealing: '55%' },
+    { name: 'Sam', avgUtility: 5.8, timesStolen: '52%', timesStealing: '15%' },
   ],
 };
 
@@ -111,10 +111,10 @@ export default function DemoPage() {
         {/* Demo Group Info */}
         <section className="bg-white/10 rounded-2xl p-6 mb-8 max-w-4xl">
           <h2 className="font-display text-2xl text-pareto-pink mb-4">
-            Demo Group: &quot;The Office Holiday Party&quot;
+            Demo Group: &quot;5C P-ai Holiday Exchange&quot;
           </h2>
           <p className="chalk-text text-pareto-light/80 text-sm mb-4">
-            8 coworkers with different gift-giving styles and preferences:
+            The Pareto Presents team with their unique gift preferences:
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {DEMO_MEMBERS.map((member) => (

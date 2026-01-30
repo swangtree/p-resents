@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import RainbowText from '@/components/RainbowText';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import { useToast } from '@/components/Toast';
 import { createClient } from '@/lib/supabase';
 
 export default function CreateGroupPage() {
@@ -11,6 +13,7 @@ export default function CreateGroupPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+  const { showToast } = useToast();
 
   const handleCreateGroup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,7 +96,7 @@ export default function CreateGroupPage() {
       console.log('Profile updated, user joined group');
 
       // Success! Show the group code and redirect
-      alert(`Group created successfully! Your group code is: ${generatedCode}\n\nShare this code with others so they can join.`);
+      showToast(`Group created! Your code is: ${generatedCode}`, 'success');
       router.push('/dashboard');
     } catch (err: unknown) {
       console.error('Error creating group:', err);
@@ -158,9 +161,16 @@ export default function CreateGroupPage() {
               <button
                 type="submit"
                 disabled={loading || !groupName.trim()}
-                className="w-full bg-pareto-pink text-pareto-light px-8 py-4 rounded-xl font-display text-2xl hover:opacity-80 disabled:opacity-50 transition-opacity"
+                className="w-full bg-pareto-pink text-pareto-light px-8 py-4 rounded-xl font-display text-2xl hover:opacity-80 disabled:opacity-50 transition-opacity flex items-center justify-center gap-3"
               >
-                {loading ? 'Creating...' : 'Create Group'}
+                {loading ? (
+                  <>
+                    <LoadingSpinner size="sm" color="border-pareto-light" />
+                    <span>Creating...</span>
+                  </>
+                ) : (
+                  'Create Group'
+                )}
               </button>
             </form>
 
