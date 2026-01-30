@@ -118,7 +118,11 @@
 
 ## Quick Wins (Optional)
 
-- [ ] Add favicon and OpenGraph meta tags for better SEO/sharing
+- [x] Add favicon and OpenGraph meta tags for better SEO/sharing
+  - *Completed: Created gift-themed SVG favicon (`apps/web/src/app/icon.svg`)*
+  - *Created dynamic OpenGraph image with Next.js ImageResponse API (`apps/web/src/app/opengraph-image.tsx`)*
+  - *Added comprehensive metadata in layout.tsx: title template, description, keywords, OpenGraph, Twitter cards, robots*
+  - *Metadata includes: site name, locale, card type, SEO keywords*
 - [x] Add "Copy to clipboard" button for group codes
   - *Completed: Added copy button in settings page with toast confirmation*
 - [ ] Mobile responsiveness polish on dashboard and results pages
