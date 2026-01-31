@@ -103,11 +103,11 @@ class TestMinimaxOptimization:
             assert min(utilities) > 0.0, "Algorithm paired a->c creating 0 utility unnecessarily"
 
 
-class TestExhaustiveVsGreedy:
-    """Tests comparing exhaustive (n<=8) and greedy (n>8) algorithms."""
+class TestOptimizedAlgorithm:
+    """Tests for the optimized threshold-based bipartite matching algorithm."""
 
-    def test_small_group_uses_exhaustive(self):
-        """Groups of 8 or fewer should find optimal solution."""
+    def test_small_group_finds_optimal(self):
+        """Groups of any size should find optimal solution with new algorithm."""
         users = [create_user_preference(f"user_{i}") for i in range(6)]
         matching = generate_matching(users)
 
@@ -116,19 +116,20 @@ class TestExhaustiveVsGreedy:
         for giver, receiver in matching.items():
             assert giver != receiver
 
-    def test_large_group_uses_greedy(self):
-        """Groups larger than 8 should use greedy algorithm."""
+    def test_large_group_complete_matching(self):
+        """Groups larger than 8 should now produce complete matching with optimized algorithm."""
         users = [create_user_preference(f"user_{i}") for i in range(12)]
         matching = generate_matching(users)
 
-        # Greedy algorithm may not produce complete matching for all users
-        # (known limitation for n>8), but should produce valid partial matching
-        assert len(matching) >= 8  # At least most users should be matched
+        # Optimized algorithm produces complete matching for all users
+        assert len(matching) == 12
         for giver, receiver in matching.items():
             assert giver != receiver
+        # Verify all unique receivers
+        assert len(set(matching.values())) == 12
 
     def test_boundary_case_8_users(self):
-        """8 users should use exhaustive search."""
+        """8 users should produce complete optimal matching."""
         users = [create_user_preference(f"user_{i}") for i in range(8)]
         matching = generate_matching(users)
 
@@ -137,14 +138,68 @@ class TestExhaustiveVsGreedy:
         assert len(set(matching.values())) == 8
 
     def test_boundary_case_9_users(self):
-        """9 users should use greedy algorithm."""
+        """9 users should produce complete matching with optimized algorithm."""
         users = [create_user_preference(f"user_{i}") for i in range(9)]
         matching = generate_matching(users)
 
-        # Greedy algorithm may not match all users (known limitation)
-        assert len(matching) >= 7  # At least most users should be matched
+        # Optimized algorithm produces complete matching
+        assert len(matching) == 9
         # Receivers should be unique
-        assert len(set(matching.values())) == len(matching)
+        assert len(set(matching.values())) == 9
+
+    def test_15_users_performance(self):
+        """15 users should complete in reasonable time (was O(n!) before)."""
+        import time
+        users = [create_user_preference(f"user_{i}") for i in range(15)]
+
+        start = time.time()
+        matching = generate_matching(users)
+        elapsed = time.time() - start
+
+        # Should complete in under 1 second with optimized algorithm
+        # (would take forever with O(n!) = 15! = 1.3 trillion iterations)
+        assert elapsed < 1.0, f"Algorithm took {elapsed:.2f}s - too slow"
+        assert len(matching) == 15
+        for giver, receiver in matching.items():
+            assert giver != receiver
+
+    def test_20_users_performance(self):
+        """20 users should complete in reasonable time."""
+        import time
+        users = [create_user_preference(f"user_{i}") for i in range(20)]
+
+        start = time.time()
+        matching = generate_matching(users)
+        elapsed = time.time() - start
+
+        # Should complete in under 2 seconds
+        assert elapsed < 2.0, f"Algorithm took {elapsed:.2f}s - too slow"
+        assert len(matching) == 20
+        for giver, receiver in matching.items():
+            assert giver != receiver
+
+    def test_large_group_minimax_quality(self):
+        """Large groups should still achieve good minimax results."""
+        # Create scenario with varied preferences
+        users = []
+        for i in range(12):
+            # Alternate between different preference profiles
+            if i % 3 == 0:
+                users.append(create_user_preference(f"user_{i}", prac_give=5, prac_recv=5, nov_give=1, nov_recv=1))
+            elif i % 3 == 1:
+                users.append(create_user_preference(f"user_{i}", prac_give=1, prac_recv=1, nov_give=5, nov_recv=5))
+            else:
+                users.append(create_user_preference(f"user_{i}", prac_give=3, prac_recv=3, nov_give=3, nov_recv=3))
+
+        matching = generate_matching(users)
+        pref_dict = {u.user_id: u for u in users}
+
+        utilities = calculate_matching_utilities(matching, pref_dict)
+        min_utility = min(utilities)
+
+        # Optimized algorithm should achieve reasonable minimum utility
+        assert len(matching) == 12
+        assert min_utility >= 3.0, f"Minimum utility {min_utility} is too low"
 
 
 class TestExclusionHandling:

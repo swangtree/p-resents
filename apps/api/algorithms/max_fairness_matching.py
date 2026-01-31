@@ -5,14 +5,20 @@ IMPLEMENTED BY: Stefanie Nguyen
 Implements fairness-optimized matching using minimax approach.
 
 Algorithm:
-- For small groups (n <= 8): Exhaustive search trying all permutations
-- For larger groups (n > 8): Greedy approach prioritizing worst-off users
+- Uses threshold-based bipartite matching to find optimal minimax solution
+- Binary searches over utility thresholds to find highest minimum utility
+- Falls back to greedy approach if bipartite matching fails
 
-TODO Stefanie: Can change algorithm to be more efficient by using what we talked about - starting with only edges of max utility + trying to find matching, if it doesn't exist go to 9, then 8, etc.
+Optimization (implemented):
+- Instead of O(n!) exhaustive search, uses O(U * n^2.5) threshold-based approach
+- where U is the number of unique utility values
+- Uses scipy's maximum_bipartite_matching for efficient perfect matching detection
 """
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Optional
 import statistics
-from itertools import permutations
+import numpy as np
+from scipy.sparse import csr_matrix
+from scipy.sparse.csgraph import maximum_bipartite_matching
 from models.preferences import UserPreference
 from models.responses import RulesetStats, UserStats
 from utils.utility_calculator import calculate_utility
@@ -48,10 +54,15 @@ def _find_fair_matching(preferences: List[UserPreference], seed: int = None) -> 
 
     Implementation by: Stefanie Nguyen
 
-    Algorithm:
-    1. For small groups (n <= 8): Try all permutations and find optimal minimax solution
-    2. For larger groups: Use greedy approach that prioritizes worst-off users
-    3. Calculate statistics for the best matching found
+    Algorithm (Optimized):
+    1. Build utility matrix for all (giver, receiver) pairs
+    2. Use threshold-based bipartite matching: binary search over utility values
+       to find the highest minimum utility that allows a perfect matching
+    3. Falls back to greedy approach if threshold method fails
+    4. Calculate statistics for the best matching found
+
+    Complexity: O(U * n^2.5) where U is the number of unique utility values
+    (much better than O(n!) for the old exhaustive search)
     """
     user_ids = [pref.user_id for pref in preferences]
     n = len(user_ids)
@@ -70,104 +81,48 @@ def _find_fair_matching(preferences: List[UserPreference], seed: int = None) -> 
     # Build preference lookup dictionary
     pref_dict = {pref.user_id: pref for pref in preferences}
 
-    # Choose algorithm based on group size
-    if n <= 8:
-        # Exhaustive search for small groups - finds optimal solution
-        best_matching = None
-        best_min_utility = float('-inf')
+    # Build utility matrix and exclusion set
+    # utility_matrix[i][j] = utility if giver i gives to receiver j
+    utility_matrix = np.zeros((n, n))
+    exclusion_matrix = np.zeros((n, n), dtype=bool)
+    user_id_to_idx = {uid: i for i, uid in enumerate(user_ids)}
 
-        # Try all possible receiver orderings
-        for receiver_perm in permutations(user_ids):
-            # Check if valid (no self-matching)
-            if any(user_ids[i] == receiver_perm[i] for i in range(n)):
-                continue
+    for i, giver_id in enumerate(user_ids):
+        giver_prefs = pref_dict[giver_id]
+        for j, receiver_id in enumerate(user_ids):
+            if i == j:
+                # Self-matching not allowed
+                utility_matrix[i][j] = -float('inf')
+                exclusion_matrix[i][j] = True
+            elif receiver_id in giver_prefs.exclusions:
+                # Exclusion - mark as invalid
+                utility_matrix[i][j] = -float('inf')
+                exclusion_matrix[i][j] = True
+            else:
+                utility_matrix[i][j] = calculate_utility(pref_dict[receiver_id], giver_prefs)
 
-            # Build matching dictionary
-            matching = {user_ids[i]: receiver_perm[i] for i in range(n)}
+    # Try threshold-based bipartite matching
+    best_matching = _find_threshold_matching(utility_matrix, exclusion_matrix, user_ids)
 
-            # Calculate utilities and check exclusions
-            utilities = []
-            valid = True
-            for giver, receiver in matching.items():
-                prefs = pref_dict[giver]
-                if receiver in prefs.exclusions:
-                    valid = False
-                    break
-                utility = calculate_utility(pref_dict[receiver], prefs)
-                utilities.append(utility)
+    # Fallback: try ignoring exclusions if no valid matching found
+    if best_matching is None:
+        # Rebuild utility matrix without exclusions (except self-matching)
+        for i in range(n):
+            for j in range(n):
+                if i != j and exclusion_matrix[i][j]:
+                    utility_matrix[i][j] = calculate_utility(
+                        pref_dict[user_ids[j]], pref_dict[user_ids[i]]
+                    )
+        exclusion_matrix_no_self = np.eye(n, dtype=bool)
+        best_matching = _find_threshold_matching(utility_matrix, exclusion_matrix_no_self, user_ids)
 
-            if not valid:
-                continue
+    # Ultimate fallback: greedy minimax
+    if best_matching is None:
+        best_matching = _greedy_minimax_matching(preferences, pref_dict, user_ids)
 
-            # Check if this matching has higher minimum utility (minimax)
-            min_utility = min(utilities)
-            if min_utility > best_min_utility:
-                best_min_utility = min_utility
-                best_matching = matching
-
-        # Fallback if no valid matching found due to exclusions
-        if best_matching is None:
-            # Try ignoring exclusions
-            for receiver_perm in permutations(user_ids):
-                if any(user_ids[i] == receiver_perm[i] for i in range(n)):
-                    continue
-                matching = {user_ids[i]: receiver_perm[i] for i in range(n)}
-                utilities = [calculate_utility(pref_dict[receiver], pref_dict[giver])
-                           for giver, receiver in matching.items()]
-                min_utility = min(utilities)
-                if best_matching is None or min_utility > best_min_utility:
-                    best_min_utility = min_utility
-                    best_matching = matching
-
-        # Ultimate fallback: circular matching
-        if best_matching is None:
-            best_matching = {user_ids[i]: user_ids[(i + 1) % n] for i in range(n)}
-
-    else:
-        # Greedy minimax for larger groups
-        matching = {}
-        available_receivers = set(user_ids)
-        unmatched_givers = set(user_ids)
-
-        while unmatched_givers:
-            # Find best assignment for each unmatched giver
-            best_assignments = []
-
-            for giver in unmatched_givers:
-                prefs = pref_dict[giver]
-
-                # Find valid receivers (not excluded, not self, still available)
-                valid_receivers = [
-                    r for r in available_receivers
-                    if r != giver and r not in prefs.exclusions
-                ]
-
-                # Fallback: ignore exclusions if needed
-                if not valid_receivers:
-                    valid_receivers = [r for r in available_receivers if r != giver]
-
-                if valid_receivers:
-                    # Find receiver with best utility for this giver
-                    receiver_utilities = [
-                        (calculate_utility(pref_dict[r], prefs), r)
-                        for r in valid_receivers
-                    ]
-                    best_utility, best_receiver = max(receiver_utilities)
-                    best_assignments.append((giver, best_receiver, best_utility))
-
-            if not best_assignments:
-                break
-
-            # Sort by utility (ascending) - assign worst-off user first
-            best_assignments.sort(key=lambda x: x[2])
-
-            # Make assignment for worst-off user
-            giver, receiver, utility = best_assignments[0]
-            matching[giver] = receiver
-            unmatched_givers.remove(giver)
-            available_receivers.remove(receiver)
-
-        best_matching = matching
+    # Final fallback: circular matching
+    if best_matching is None or len(best_matching) < n:
+        best_matching = {user_ids[i]: user_ids[(i + 1) % n] for i in range(n)}
 
     # Calculate statistics for the best matching
     utilities = {}
@@ -219,3 +174,126 @@ def _find_fair_matching(preferences: List[UserPreference], seed: int = None) -> 
     )
 
     return best_matching, stats
+
+
+def _find_threshold_matching(
+    utility_matrix: np.ndarray,
+    exclusion_matrix: np.ndarray,
+    user_ids: List[str]
+) -> Optional[Dict[str, str]]:
+    """
+    Find optimal minimax matching using threshold-based bipartite matching.
+
+    Algorithm:
+    1. Get all unique utility values from valid edges (sorted descending)
+    2. For each threshold, starting from highest:
+       - Include only edges with utility >= threshold
+       - Check if a perfect matching exists using scipy's max bipartite matching
+       - If found, return that matching
+    3. Return None if no perfect matching exists at any threshold
+
+    This finds the matching that maximizes the minimum edge weight.
+    """
+    n = len(user_ids)
+    if n == 0:
+        return {}
+    if n == 1:
+        # Single user - no valid matching possible (self-matching not allowed)
+        return None
+
+    # Get all valid utility values (excluding -inf from self-matches and exclusions)
+    valid_utilities = []
+    for i in range(n):
+        for j in range(n):
+            if not exclusion_matrix[i][j]:
+                valid_utilities.append(utility_matrix[i][j])
+
+    if not valid_utilities:
+        return None
+
+    # Sort unique thresholds in descending order (try highest first)
+    unique_thresholds = sorted(set(valid_utilities), reverse=True)
+
+    # Try each threshold, starting from highest
+    for threshold in unique_thresholds:
+        # Build adjacency matrix with only edges >= threshold
+        adj_matrix = np.zeros((n, n), dtype=np.int8)
+        for i in range(n):
+            for j in range(n):
+                if not exclusion_matrix[i][j] and utility_matrix[i][j] >= threshold:
+                    adj_matrix[i][j] = 1
+
+        # Convert to sparse matrix for scipy
+        sparse_adj = csr_matrix(adj_matrix)
+
+        # Find maximum bipartite matching
+        # Returns array where match[i] = j means row i is matched to column j
+        # -1 means unmatched
+        match = maximum_bipartite_matching(sparse_adj, perm_type='column')
+
+        # Check if it's a perfect matching (all rows matched)
+        if -1 not in match:
+            # Build matching dictionary
+            return {user_ids[i]: user_ids[match[i]] for i in range(n)}
+
+    return None
+
+
+def _greedy_minimax_matching(
+    preferences: List[UserPreference],
+    pref_dict: Dict[str, UserPreference],
+    user_ids: List[str]
+) -> Optional[Dict[str, str]]:
+    """
+    Greedy minimax matching as fallback.
+
+    Assigns users greedily, prioritizing the worst-off user first
+    to maximize the minimum utility.
+    """
+    n = len(user_ids)
+    if n == 0:
+        return {}
+
+    matching = {}
+    available_receivers = set(user_ids)
+    unmatched_givers = set(user_ids)
+
+    while unmatched_givers:
+        # Find best assignment for each unmatched giver
+        best_assignments = []
+
+        for giver in unmatched_givers:
+            prefs = pref_dict[giver]
+
+            # Find valid receivers (not excluded, not self, still available)
+            valid_receivers = [
+                r for r in available_receivers
+                if r != giver and r not in prefs.exclusions
+            ]
+
+            # Fallback: ignore exclusions if needed
+            if not valid_receivers:
+                valid_receivers = [r for r in available_receivers if r != giver]
+
+            if valid_receivers:
+                # Find receiver with best utility for this giver
+                receiver_utilities = [
+                    (calculate_utility(pref_dict[r], prefs), r)
+                    for r in valid_receivers
+                ]
+                best_utility, best_receiver = max(receiver_utilities)
+                best_assignments.append((giver, best_receiver, best_utility))
+
+        if not best_assignments:
+            break
+
+        # Sort by utility (ascending) - assign worst-off user first
+        best_assignments.sort(key=lambda x: x[2])
+
+        # Make assignment for worst-off user
+        giver, receiver, utility = best_assignments[0]
+        matching[giver] = receiver
+        unmatched_givers.remove(giver)
+        available_receivers.remove(receiver)
+
+    return matching if len(matching) == n else None
