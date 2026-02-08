@@ -1,6 +1,6 @@
 import { RecalculateRequest, RecalculateResponse, FinalizeRequest, FinalizeResponse, RulesetStatistics, SendNotificationsRequest, SendNotificationsResponse } from '@/types/api.types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://p-resents-api.fly.dev';
 
 export class ApiService {
   /**
